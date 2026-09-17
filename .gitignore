@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+.env
+
+# Modelos 3D: son datos de usuario/runtime, nunca se versionan (pesan demasiado)
+*.glb
+
+packages/backend/uploads/**
+!packages/backend/uploads/models/
+!packages/backend/uploads/models/.gitkeep
+!packages/backend/uploads/photos/
+!packages/backend/uploads/photos/.gitkeep
+
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

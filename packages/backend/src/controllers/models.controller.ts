@@ -1,0 +1,59 @@
+import type { Request, Response, NextFunction } from "express";
+import * as modelsService from "../services/models.service.js";
+
+export async function uploadModel(req: Request, res: Response, next: NextFunction) {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: "Falta el archivo .glb (campo 'file')" });
+    }
+    const { name, crsDescription, notes, latitude, longitude } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: "Falta el campo 'name'" });
+    }
+
+    const model = await modelsService.createModel({
+      name,
+      filename: file.filename,
+      originalFilename: file.originalname,
+      filePath: `models/${file.filename}`,
+      fileSizeBytes: file.size,
+      crsDescription: crsDescription || null,
+      latitude: latitude ? Number(latitude) : null,
+      longitude: longitude ? Number(longitude) : null,
+      notes: notes || null,
+    });
+
+    res.status(201).json(model);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listModels(_req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await modelsService.listModels());
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getActiveModel(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const model = await modelsService.getActiveModel();
+    if (!model) return res.status(404).json({ error: "No hay ningún modelo activo" });
+    res.json(model);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getModelById(req: Request, res: Response, next: NextFunction) {
+  try {
+    const model = await modelsService.getModelById(req.params.id);
+    if (!model) return res.status(404).json({ error: "Modelo no encontrado" });
+    res.json(model);
+  } catch (err) {
+    next(err);
+  }
+}

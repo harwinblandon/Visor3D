@@ -1,0 +1,32 @@
+export const theme = {
+  color: {
+    bg: "#0b0d10",
+    bgCanvas: "#15181c",
+    panel: "#181b1f",
+    panelAlt: "#1f2328",
+    border: "#2a2f36",
+    text: "#e8eaed",
+    textMuted: "#8b95a1",
+    accent: "#3ba7ff",
+    distance: "#f5b942",
+    area: "#38bdf8",
+    polyline: "#d4d8dd",
+    danger: "#ef4444",
+    severity: {
+      baja: "#4ade80",
+      media: "#fbbf24",
+      alta: "#f87171",
+    },
+    damageType: {
+      grieta: "#3987e5",
+      fisura: "#d95926",
+      desprendimiento: "#199e70",
+      humedad: "#c98500",
+      corrosion: "#d55181",
+      otro: "#008300",
+    },
+    chartGrid: "#2c2c2a",
+  },
+  radius: 8,
+  font: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+} as const;

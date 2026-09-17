@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-visor3d}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-visor3d}
+      POSTGRES_DB: ${POSTGRES_DB:-visor3d}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - visor3d_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-visor3d}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  visor3d_pgdata:

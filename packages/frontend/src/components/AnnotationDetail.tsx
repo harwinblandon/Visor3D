@@ -3,7 +3,8 @@ import { useViewerStore } from "../state/viewerStore";
 import { updateAnnotation, deleteAnnotation, photoUrl } from "../api/annotations";
 import { theme } from "../styles/theme";
 
-const SEVERITIES: { value: Severity; label: string }[] = [
+const SEVERITIES: { value: Severity | ""; label: string }[] = [
+  { value: "", label: "Sin definir" },
   { value: "baja", label: "Baja" },
   { value: "media", label: "Media" },
   { value: "alta", label: "Alta" },
@@ -44,7 +45,8 @@ export function AnnotationDetail() {
   const annotation = annotations.find((a) => a.id === selectedAnnotationId);
   if (!annotation) return null;
 
-  const handleSeverityChange = (severity: Severity) => {
+  const handleSeverityChange = (value: Severity | "") => {
+    const severity = value === "" ? null : value;
     updateAnnotationLocal(annotation.id, { severity });
     updateAnnotation(annotation.id, { severity }).catch((err) => console.error("No se pudo actualizar:", err));
   };
@@ -97,8 +99,8 @@ export function AnnotationDetail() {
 
       <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
         <select
-          value={annotation.severity}
-          onChange={(e) => handleSeverityChange(e.target.value as Severity)}
+          value={annotation.severity ?? ""}
+          onChange={(e) => handleSeverityChange(e.target.value as Severity | "")}
           style={{ ...selectStyle, flex: 1 }}
         >
           {SEVERITIES.map((s) => (

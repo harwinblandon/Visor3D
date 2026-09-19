@@ -13,6 +13,11 @@ const COLOR_BY_TYPE: Record<Measurement["type"], number> = {
   polyline: Drawing.ACI.WHITE,
 };
 
+function resolveLayerName(m: Measurement): string {
+  const custom = m.layer?.trim();
+  return custom ? custom : LAYER_BY_TYPE[m.type];
+}
+
 function featurePoints(m: Measurement): Array<[number, number, number]> {
   const pts = m.points.map((p) => [p.x, p.y, p.z] as [number, number, number]);
   if (m.type === "area" && pts.length > 0) {
@@ -25,12 +30,17 @@ export function buildDXF(measurements: Measurement[]): string {
   const drawing = new Drawing();
   drawing.setUnits("Meters");
 
-  for (const type of Object.keys(LAYER_BY_TYPE) as Measurement["type"][]) {
-    drawing.addLayer(LAYER_BY_TYPE[type], COLOR_BY_TYPE[type], "CONTINUOUS");
+  const layerColors = new Map<string, number>();
+  for (const m of measurements) {
+    const name = resolveLayerName(m);
+    if (!layerColors.has(name)) layerColors.set(name, COLOR_BY_TYPE[m.type]);
+  }
+  for (const [name, color] of layerColors) {
+    drawing.addLayer(name, color, "CONTINUOUS");
   }
 
   for (const m of measurements) {
-    drawing.setActiveLayer(LAYER_BY_TYPE[m.type]);
+    drawing.setActiveLayer(resolveLayerName(m));
     const pts = featurePoints(m);
     if (pts.length >= 2) {
       drawing.drawPolyline3d(pts);
@@ -68,7 +78,7 @@ function csvField(value: string | number | null | undefined): string {
 export function buildAnnotationsCSV(annotations: Annotation[]): string {
   const headers = [
     "Fecha detectada",
-    "Tipo de daño",
+    "Categoría",
     "Severidad",
     "Estado",
     "Descripción",
@@ -83,7 +93,7 @@ export function buildAnnotationsCSV(annotations: Annotation[]): string {
   const rows = annotations.map((a) => [
     csvField(a.detectedAt),
     csvField(DAMAGE_LABELS[a.damageType] ?? a.damageType),
-    csvField(SEVERITY_LABELS[a.severity] ?? a.severity),
+    csvField(a.severity ? (SEVERITY_LABELS[a.severity] ?? a.severity) : ""),
     csvField(STATUS_LABELS[a.status] ?? a.status),
     csvField(a.description),
     csvField(a.author),
@@ -106,6 +116,7 @@ export function buildGeoJSON(measurements: Measurement[]): object {
       properties: {
         id: m.id,
         measurementType: m.type,
+        layer: resolveLayerName(m),
         value: m.value,
         unit: m.unit,
         label: m.label,

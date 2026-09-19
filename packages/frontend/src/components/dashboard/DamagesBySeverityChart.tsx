@@ -3,7 +3,7 @@ import type { StatsSummary } from "@visor3d/shared";
 import { theme } from "../../styles/theme";
 import { ChartTooltip } from "./ChartTooltip";
 
-const ORDER: (keyof StatsSummary["bySeverity"])[] = ["baja", "media", "alta"];
+const ORDER: ("baja" | "media" | "alta")[] = ["baja", "media", "alta"];
 const LABELS: Record<string, string> = { baja: "Baja", media: "Media", alta: "Alta" };
 
 interface DamagesBySeverityChartProps {

@@ -6,7 +6,7 @@ export interface CreateAnnotationInput {
   position: Point3D;
   normal?: Point3D | null;
   damageType: DamageType;
-  severity: Severity;
+  severity?: Severity | null;
   description?: string;
   author?: string;
   detectedAt?: string;
@@ -26,7 +26,7 @@ export function listAnnotations(modelId: string): Promise<Annotation[]> {
 
 export interface UpdateAnnotationInput {
   damageType?: DamageType;
-  severity?: Severity;
+  severity?: Severity | null;
   status?: AnnotationStatus;
   description?: string;
 }

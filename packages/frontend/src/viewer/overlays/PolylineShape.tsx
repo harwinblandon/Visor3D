@@ -6,11 +6,12 @@ import { theme } from "../../styles/theme";
 interface PolylineShapeProps {
   points: Vector3[];
   length: number;
+  label?: string | null;
   editable?: boolean;
   onVertexDown?: (index: number) => void;
 }
 
-export function PolylineShape({ points, length, editable, onVertexDown }: PolylineShapeProps) {
+export function PolylineShape({ points, length, label, editable, onVertexDown }: PolylineShapeProps) {
   const mid = points[Math.floor(points.length / 2)];
 
   const handleDown = (index: number) => (event: ThreeEvent<PointerEvent>) => {
@@ -43,6 +44,7 @@ export function PolylineShape({ points, length, editable, onVertexDown }: Polyli
             pointerEvents: "none",
           }}
         >
+          {label ? `${label}: ` : ""}
           {length.toFixed(2)} m
         </div>
       </Html>

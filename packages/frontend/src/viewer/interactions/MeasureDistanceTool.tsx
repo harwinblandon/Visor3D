@@ -21,7 +21,7 @@ export function MeasureDistanceTool() {
     const [a, b] = pendingPoints;
     const distance = computeDistance(a, b);
     const id = crypto.randomUUID();
-    addDistanceMeasurement({ id, points: [a.clone(), b.clone()], distance });
+    addDistanceMeasurement({ id, points: [a.clone(), b.clone()], distance, label: null, layer: null, note: null });
 
     if (modelId) {
       createMeasurement({
@@ -40,6 +40,7 @@ export function MeasureDistanceTool() {
               m.id === id ? { ...m, id: saved.id } : m,
             ),
           }));
+          useViewerStore.getState().setLastCreatedMeasurementId(saved.id);
         })
         .catch((err) => console.error("No se pudo guardar la medición de distancia:", err));
     }
@@ -61,11 +62,12 @@ export function MeasureDistanceTool() {
             a={editingMeasurement.points[0]}
             b={editingMeasurement.points[1]}
             distance={computeDistance(editingMeasurement.points[0], editingMeasurement.points[1])}
+            label={m.label}
             editable
             onVertexDown={startDrag}
           />
         ) : (
-          <DistanceLine key={m.id} a={m.points[0]} b={m.points[1]} distance={m.distance} />
+          <DistanceLine key={m.id} a={m.points[0]} b={m.points[1]} distance={m.distance} label={m.label} />
         ),
       )}
       {activeTool === "measure-distance" && pendingPoints.length === 1 && (

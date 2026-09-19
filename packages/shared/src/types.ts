@@ -30,18 +30,14 @@ export interface Measurement {
   value: number;
   unit: string;
   label: string | null;
+  layer: string | null;
   author: string | null;
   note: string | null;
   createdAt: string;
 }
 
-export type DamageType =
-  | "grieta"
-  | "fisura"
-  | "desprendimiento"
-  | "humedad"
-  | "corrosion"
-  | "otro";
+/** Categoría libre elegida por quien anota (antes limitada a una lista fija de tipos de daño). */
+export type DamageType = string;
 
 export type Severity = "baja" | "media" | "alta";
 
@@ -62,7 +58,7 @@ export interface Annotation {
   position: Point3D;
   normal: Point3D | null;
   damageType: DamageType;
-  severity: Severity;
+  severity: Severity | null;
   status: AnnotationStatus;
   description: string | null;
   author: string | null;
@@ -74,8 +70,8 @@ export interface Annotation {
 
 export interface StatsSummary {
   totalAnnotations: number;
-  byType: Record<DamageType, number>;
-  bySeverity: Record<Severity, number>;
+  byType: Record<string, number>;
+  bySeverity: Record<string, number>;
   byStatus: Record<AnnotationStatus, number>;
   overTime: { month: string; count: number }[];
 }

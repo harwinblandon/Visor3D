@@ -11,7 +11,7 @@ interface AnnotationRow {
   normal_y: number | null;
   normal_z: number | null;
   damage_type: DamageType;
-  severity: Severity;
+  severity: Severity | null;
   status: AnnotationStatus;
   description: string | null;
   author: string | null;
@@ -66,7 +66,7 @@ export interface CreateAnnotationInput {
   position: { x: number; y: number; z: number };
   normal?: { x: number; y: number; z: number } | null;
   damageType: DamageType;
-  severity: Severity;
+  severity?: Severity | null;
   description?: string | null;
   author?: string | null;
   detectedAt?: string | null;
@@ -87,7 +87,7 @@ export async function createAnnotation(input: CreateAnnotationInput): Promise<An
       input.normal?.y ?? null,
       input.normal?.z ?? null,
       input.damageType,
-      input.severity,
+      input.severity ?? null,
       input.description ?? null,
       input.author ?? null,
       input.detectedAt ?? null,
@@ -159,7 +159,7 @@ export async function getAnnotationById(id: string): Promise<Annotation | null> 
 
 export interface UpdateAnnotationInput {
   damageType?: DamageType;
-  severity?: Severity;
+  severity?: Severity | null;
   status?: AnnotationStatus;
   description?: string | null;
 }

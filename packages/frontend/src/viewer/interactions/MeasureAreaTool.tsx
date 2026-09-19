@@ -12,7 +12,7 @@ export function finalizeAreaPolygon() {
   const { area } = computeNewellArea(pendingPoints);
   const points = pendingPoints.map((p) => p.clone());
   const id = crypto.randomUUID();
-  addAreaMeasurement({ id, points, area });
+  addAreaMeasurement({ id, points, area, label: null, layer: null, note: null });
   clearPendingPoints();
 
   if (modelId) {
@@ -27,6 +27,7 @@ export function finalizeAreaPolygon() {
         useViewerStore.setState((state) => ({
           areaMeasurements: state.areaMeasurements.map((m) => (m.id === id ? { ...m, id: saved.id } : m)),
         }));
+        useViewerStore.getState().setLastCreatedMeasurementId(saved.id);
       })
       .catch((err) => console.error("No se pudo guardar la medición de área:", err));
   }
@@ -55,11 +56,12 @@ export function MeasureAreaTool() {
             key={m.id}
             points={editingMeasurement.points}
             area={computeNewellArea(editingMeasurement.points).area}
+            label={m.label}
             editable
             onVertexDown={startDrag}
           />
         ) : (
-          <AreaPolygon key={m.id} points={m.points} area={m.area} />
+          <AreaPolygon key={m.id} points={m.points} area={m.area} label={m.label} />
         ),
       )}
 

@@ -18,8 +18,8 @@ async function safeUnlink(relativePath: string) {
 export async function createAnnotation(req: Request, res: Response, next: NextFunction) {
   try {
     const { modelId, position, normal, damageType, severity, description, author, detectedAt } = req.body;
-    if (!modelId || !position || !damageType || !severity) {
-      return res.status(400).json({ error: "Faltan campos requeridos (modelId, position, damageType, severity)" });
+    if (!modelId || !position || !damageType) {
+      return res.status(400).json({ error: "Faltan campos requeridos (modelId, position, damageType)" });
     }
     const annotation = await annotationsService.createAnnotation({
       modelId,

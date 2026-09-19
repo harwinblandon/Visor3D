@@ -9,19 +9,25 @@ export interface PendingAnnotation {
   normal: Vector3 | null;
 }
 
-export interface DistanceMeasurement {
+export interface MeasurementMeta {
+  label: string | null;
+  layer: string | null;
+  note: string | null;
+}
+
+export interface DistanceMeasurement extends MeasurementMeta {
   id: string;
   points: [Vector3, Vector3];
   distance: number;
 }
 
-export interface AreaMeasurement {
+export interface AreaMeasurement extends MeasurementMeta {
   id: string;
   points: Vector3[];
   area: number;
 }
 
-export interface PolylineMeasurement {
+export interface PolylineMeasurement extends MeasurementMeta {
   id: string;
   points: Vector3[];
   length: number;
@@ -47,6 +53,7 @@ interface ViewerState {
   selectedAnnotationId: string | null;
   editingMeasurement: EditingMeasurement | null;
   draggingIndex: number | null;
+  lastCreatedMeasurementId: string | null;
   setModelId: (modelId: string | null) => void;
   setActiveTool: (tool: ActiveTool) => void;
   addPendingPoint: (point: Vector3) => void;
@@ -67,6 +74,8 @@ interface ViewerState {
   startEditingMeasurement: (m: EditingMeasurement) => void;
   cancelEditingMeasurement: () => void;
   applyEditedMeasurement: (id: string, points: Vector3[], value: number) => void;
+  updateMeasurementMeta: (id: string, type: EditingMeasurementType, patch: Partial<MeasurementMeta>) => void;
+  setLastCreatedMeasurementId: (id: string | null) => void;
   startDrag: (index: number) => void;
   endDrag: () => void;
   updateDragPoint: (point: Vector3) => void;
@@ -84,6 +93,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
   selectedAnnotationId: null,
   editingMeasurement: null,
   draggingIndex: null,
+  lastCreatedMeasurementId: null,
 
   setModelId: (modelId) => set({ modelId }),
 
@@ -174,6 +184,24 @@ export const useViewerStore = create<ViewerState>((set) => ({
           ? state.polylineMeasurements.map((m) => (m.id === id ? { ...m, points, length: value } : m))
           : state.polylineMeasurements,
     })),
+
+  updateMeasurementMeta: (id, type, patch) =>
+    set((state) => ({
+      distanceMeasurements:
+        type === "distance"
+          ? state.distanceMeasurements.map((m) => (m.id === id ? { ...m, ...patch } : m))
+          : state.distanceMeasurements,
+      areaMeasurements:
+        type === "area"
+          ? state.areaMeasurements.map((m) => (m.id === id ? { ...m, ...patch } : m))
+          : state.areaMeasurements,
+      polylineMeasurements:
+        type === "polyline"
+          ? state.polylineMeasurements.map((m) => (m.id === id ? { ...m, ...patch } : m))
+          : state.polylineMeasurements,
+    })),
+
+  setLastCreatedMeasurementId: (id) => set({ lastCreatedMeasurementId: id }),
 
   startDrag: (index) => set({ draggingIndex: index }),
 

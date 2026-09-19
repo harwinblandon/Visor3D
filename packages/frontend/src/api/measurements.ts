@@ -7,6 +7,8 @@ export interface CreateMeasurementInput {
   points: Point3D[];
   value: number;
   unit: string;
+  label?: string | null;
+  layer?: string | null;
 }
 
 export function createMeasurement(input: CreateMeasurementInput): Promise<Measurement> {
@@ -21,11 +23,19 @@ export function listMeasurements(modelId: string): Promise<Measurement[]> {
   return apiFetch<Measurement[]>(`/api/measurements?modelId=${encodeURIComponent(modelId)}`);
 }
 
-export function updateMeasurement(id: string, points: Point3D[], value: number): Promise<Measurement> {
+export interface UpdateMeasurementInput {
+  points?: Point3D[];
+  value?: number;
+  label?: string | null;
+  layer?: string | null;
+  note?: string | null;
+}
+
+export function updateMeasurement(id: string, patch: UpdateMeasurementInput): Promise<Measurement> {
   return apiFetch<Measurement>(`/api/measurements/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ points, value }),
+    body: JSON.stringify(patch),
   });
 }
 

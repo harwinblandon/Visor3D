@@ -76,6 +76,9 @@ export function Viewer3D({
               new Vector3(r.points[1].x, r.points[1].y, r.points[1].z),
             ] as [Vector3, Vector3],
             distance: r.value,
+            label: r.label,
+            layer: r.layer,
+            note: r.note,
           }));
 
         const areaMeasurements = rows
@@ -84,6 +87,9 @@ export function Viewer3D({
             id: r.id,
             points: r.points.map((p) => new Vector3(p.x, p.y, p.z)),
             area: r.value,
+            label: r.label,
+            layer: r.layer,
+            note: r.note,
           }));
 
         const polylineMeasurements = rows
@@ -92,6 +98,9 @@ export function Viewer3D({
             id: r.id,
             points: r.points.map((p) => new Vector3(p.x, p.y, p.z)),
             length: r.value,
+            label: r.label,
+            layer: r.layer,
+            note: r.note,
           }));
 
         useViewerStore.setState({ distanceMeasurements, areaMeasurements, polylineMeasurements });

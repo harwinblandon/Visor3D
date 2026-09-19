@@ -27,7 +27,7 @@ export function DamagesByTypeChart({ byType }: DamagesByTypeChartProps) {
   return (
     <div style={{ background: theme.color.panel, border: `1px solid ${theme.color.border}`, borderRadius: theme.radius, padding: 16 }}>
       <div style={{ color: theme.color.text, fontSize: 13, fontWeight: 600, marginBottom: 12, fontFamily: theme.font }}>
-        Daños por tipo
+        Anotaciones por categoría
       </div>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>

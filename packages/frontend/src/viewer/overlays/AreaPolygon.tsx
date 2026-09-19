@@ -8,11 +8,12 @@ import { theme } from "../../styles/theme";
 interface AreaPolygonProps {
   points: Vector3[];
   area: number;
+  label?: string | null;
   editable?: boolean;
   onVertexDown?: (index: number) => void;
 }
 
-export function AreaPolygon({ points, area, editable, onVertexDown }: AreaPolygonProps) {
+export function AreaPolygon({ points, area, label, editable, onVertexDown }: AreaPolygonProps) {
   const geometry = useMemo(() => {
     const { normal } = computeNewellArea(points);
     return triangulateForRender(points, normal);
@@ -59,6 +60,7 @@ export function AreaPolygon({ points, area, editable, onVertexDown }: AreaPolygo
             pointerEvents: "none",
           }}
         >
+          {label ? `${label}: ` : ""}
           {area.toFixed(2)} m²
         </div>
       </Html>

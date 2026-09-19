@@ -13,7 +13,7 @@ export function finalizePolyline() {
   const points = pendingPoints.map((p) => p.clone());
   const length = computePolylineLength(points);
   const id = crypto.randomUUID();
-  addPolylineMeasurement({ id, points, length });
+  addPolylineMeasurement({ id, points, length, label: null, layer: null, note: null });
   clearPendingPoints();
 
   if (modelId) {
@@ -30,6 +30,7 @@ export function finalizePolyline() {
             m.id === id ? { ...m, id: saved.id } : m,
           ),
         }));
+        useViewerStore.getState().setLastCreatedMeasurementId(saved.id);
       })
       .catch((err) => console.error("No se pudo guardar la polilínea:", err));
   }
@@ -58,11 +59,12 @@ export function PolylineTool() {
             key={m.id}
             points={editingMeasurement.points}
             length={computePolylineLength(editingMeasurement.points)}
+            label={m.label}
             editable
             onVertexDown={startDrag}
           />
         ) : (
-          <PolylineShape key={m.id} points={m.points} length={m.length} />
+          <PolylineShape key={m.id} points={m.points} length={m.length} label={m.label} />
         ),
       )}
 

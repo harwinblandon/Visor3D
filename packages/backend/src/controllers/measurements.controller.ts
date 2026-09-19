@@ -3,7 +3,7 @@ import * as measurementsService from "../services/measurements.service.js";
 
 export async function createMeasurement(req: Request, res: Response, next: NextFunction) {
   try {
-    const { modelId, type, points, value, unit, label, author, note } = req.body;
+    const { modelId, type, points, value, unit, label, layer, author, note } = req.body;
     if (!modelId || !type || !points || value === undefined || !unit) {
       return res.status(400).json({ error: "Faltan campos requeridos (modelId, type, points, value, unit)" });
     }
@@ -14,6 +14,7 @@ export async function createMeasurement(req: Request, res: Response, next: NextF
       value,
       unit,
       label,
+      layer,
       author,
       note,
     });
@@ -37,11 +38,15 @@ export async function listMeasurements(req: Request, res: Response, next: NextFu
 
 export async function updateMeasurement(req: Request, res: Response, next: NextFunction) {
   try {
-    const { points, value } = req.body;
-    if (!points || value === undefined) {
-      return res.status(400).json({ error: "Faltan campos requeridos (points, value)" });
-    }
-    const measurement = await measurementsService.updateMeasurement(req.params.id, points, value);
+    const { points, value, label, layer, note } = req.body;
+    const patch: Record<string, unknown> = {};
+    if (points !== undefined) patch.points = points;
+    if (value !== undefined) patch.value = value;
+    if (label !== undefined) patch.label = label;
+    if (layer !== undefined) patch.layer = layer;
+    if (note !== undefined) patch.note = note;
+
+    const measurement = await measurementsService.updateMeasurement(req.params.id, patch);
     if (!measurement) return res.status(404).json({ error: "Medición no encontrada" });
     res.json(measurement);
   } catch (err) {

@@ -7,11 +7,12 @@ interface DistanceLineProps {
   a: Vector3;
   b: Vector3;
   distance: number;
+  label?: string | null;
   editable?: boolean;
   onVertexDown?: (index: number) => void;
 }
 
-export function DistanceLine({ a, b, distance, editable, onVertexDown }: DistanceLineProps) {
+export function DistanceLine({ a, b, distance, label, editable, onVertexDown }: DistanceLineProps) {
   const midpoint = a.clone().add(b).multiplyScalar(0.5);
   const radius = Math.max(distance * 0.01, 0.02) * (editable ? 1.8 : 1);
 
@@ -47,6 +48,7 @@ export function DistanceLine({ a, b, distance, editable, onVertexDown }: Distanc
             pointerEvents: "none",
           }}
         >
+          {label ? `${label}: ` : ""}
           {distance.toFixed(2)} m
         </div>
       </Html>

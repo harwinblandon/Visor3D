@@ -1,9 +1,9 @@
-import type { DamageType, Severity, AnnotationStatus, StatsSummary } from "@visor3d/shared";
+import type { Severity, AnnotationStatus, StatsSummary } from "@visor3d/shared";
 import { pool } from "../db/pool.js";
 
-const DAMAGE_TYPES: DamageType[] = ["grieta", "fisura", "desprendimiento", "humedad", "corrosion", "otro"];
 const SEVERITIES: Severity[] = ["baja", "media", "alta"];
 const STATUSES: AnnotationStatus[] = ["abierto", "en_revision", "resuelto"];
+const NO_SEVERITY_KEY = "sin_definir";
 
 function zeroed<K extends string>(keys: K[]): Record<K, number> {
   return Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
@@ -31,11 +31,17 @@ export async function getSummary(modelId: string): Promise<StatsSummary> {
     ),
   ]);
 
-  const byType = zeroed(DAMAGE_TYPES);
-  for (const row of byTypeResult.rows) byType[row.damage_type as DamageType] = Number(row.count);
+  const byType: Record<string, number> = {};
+  for (const row of byTypeResult.rows) {
+    if (row.damage_type) byType[row.damage_type] = Number(row.count);
+  }
 
-  const bySeverity = zeroed(SEVERITIES);
-  for (const row of bySeverityResult.rows) bySeverity[row.severity as Severity] = Number(row.count);
+  const bySeverity: Record<string, number> = zeroed(SEVERITIES);
+  bySeverity[NO_SEVERITY_KEY] = 0;
+  for (const row of bySeverityResult.rows) {
+    const key = row.severity ?? NO_SEVERITY_KEY;
+    bySeverity[key] = Number(row.count);
+  }
 
   const byStatus = zeroed(STATUSES);
   for (const row of byStatusResult.rows) byStatus[row.status as AnnotationStatus] = Number(row.count);

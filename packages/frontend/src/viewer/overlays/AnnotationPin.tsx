@@ -11,7 +11,7 @@ interface AnnotationPinProps {
 
 export function AnnotationPin({ annotation, selected, onSelect }: AnnotationPinProps) {
   const position = new Vector3(annotation.position.x, annotation.position.y, annotation.position.z);
-  const color = theme.color.severity[annotation.severity];
+  const color = annotation.severity ? theme.color.severity[annotation.severity] : theme.color.textMuted;
   const size = selected ? 22 : 16;
 
   return (

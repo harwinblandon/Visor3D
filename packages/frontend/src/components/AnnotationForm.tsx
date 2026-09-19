@@ -4,16 +4,20 @@ import { useViewerStore } from "../state/viewerStore";
 import { createAnnotation, uploadAnnotationPhotos } from "../api/annotations";
 import { theme } from "../styles/theme";
 
-const DAMAGE_TYPES: { value: DamageType; label: string }[] = [
-  { value: "grieta", label: "Grieta" },
-  { value: "fisura", label: "Fisura" },
-  { value: "desprendimiento", label: "Desprendimiento" },
-  { value: "humedad", label: "Humedad" },
-  { value: "corrosion", label: "Corrosión" },
-  { value: "otro", label: "Otro" },
+const CATEGORY_SUGGESTIONS = [
+  "Grieta",
+  "Fisura",
+  "Desprendimiento",
+  "Humedad",
+  "Corrosión",
+  "Material",
+  "Acabado",
+  "Instalación",
+  "Otro",
 ];
 
-const SEVERITIES: { value: Severity; label: string }[] = [
+const SEVERITIES: { value: Severity | ""; label: string }[] = [
+  { value: "", label: "Sin definir" },
   { value: "baja", label: "Baja" },
   { value: "media", label: "Media" },
   { value: "alta", label: "Alta" },
@@ -42,8 +46,8 @@ export function AnnotationForm() {
   const setPendingAnnotation = useViewerStore((s) => s.setPendingAnnotation);
   const addAnnotation = useViewerStore((s) => s.addAnnotation);
 
-  const [damageType, setDamageType] = useState<DamageType>("grieta");
-  const [severity, setSeverity] = useState<Severity>("media");
+  const [damageType, setDamageType] = useState<DamageType>("");
+  const [severity, setSeverity] = useState<Severity | "">("");
   const [description, setDescription] = useState("");
   const [detectedAt, setDetectedAt] = useState(() => new Date().toISOString().slice(0, 10));
   const [author, setAuthor] = useState(() => localStorage.getItem(AUTHOR_STORAGE_KEY) ?? "");
@@ -57,6 +61,10 @@ export function AnnotationForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!damageType.trim()) {
+      setError("Escribe una categoría (ej. Grieta, Material, Acabado)");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -68,8 +76,8 @@ export function AnnotationForm() {
         normal: pendingAnnotation.normal
           ? { x: pendingAnnotation.normal.x, y: pendingAnnotation.normal.y, z: pendingAnnotation.normal.z }
           : null,
-        damageType,
-        severity,
+        damageType: damageType.trim(),
+        severity: severity || null,
         description: description || undefined,
         author: author || undefined,
         detectedAt: detectedAt || undefined,
@@ -114,28 +122,30 @@ export function AnnotationForm() {
           boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
         }}
       >
-        <h3 style={{ color: theme.color.text, margin: 0, fontSize: 15, fontWeight: 600 }}>Nueva anotación de daño</h3>
+        <h3 style={{ color: theme.color.text, margin: 0, fontSize: 15, fontWeight: 600 }}>Nueva anotación</h3>
 
         <label style={labelStyle}>
-          Tipo de daño
-          <select
+          Categoría (elige una sugerencia o escribe la tuya)
+          <input
+            type="text"
+            list="annotation-category-suggestions"
             value={damageType}
-            onChange={(e) => setDamageType(e.target.value as DamageType)}
+            onChange={(e) => setDamageType(e.target.value)}
+            placeholder="Ej. Grieta, Material, Acabado..."
             style={{ ...fieldStyle, marginTop: 4 }}
-          >
-            {DAMAGE_TYPES.map((d) => (
-              <option key={d.value} value={d.value}>
-                {d.label}
-              </option>
+          />
+          <datalist id="annotation-category-suggestions">
+            {CATEGORY_SUGGESTIONS.map((c) => (
+              <option key={c} value={c} />
             ))}
-          </select>
+          </datalist>
         </label>
 
         <label style={labelStyle}>
-          Severidad
+          Severidad (opcional)
           <select
             value={severity}
-            onChange={(e) => setSeverity(e.target.value as Severity)}
+            onChange={(e) => setSeverity(e.target.value as Severity | "")}
             style={{ ...fieldStyle, marginTop: 4 }}
           >
             {SEVERITIES.map((s) => (

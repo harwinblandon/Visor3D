@@ -1,4 +1,5 @@
 import { useViewerStore, TOUR_LEG_DURATION_SECONDS } from "../state/viewerStore";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { theme } from "../styles/theme";
 
 function formatTime(seconds: number): string {
@@ -12,9 +13,10 @@ const iconButtonStyle: React.CSSProperties = {
   background: "transparent",
   color: theme.color.text,
   cursor: "pointer",
-  fontSize: 15,
+  fontSize: 16,
   lineHeight: 1,
-  padding: "4px 6px",
+  padding: "6px",
+  flexShrink: 0,
 };
 
 export function TourPlayerBar() {
@@ -26,6 +28,7 @@ export function TourPlayerBar() {
   const resumeTour = useViewerStore((s) => s.resumeTour);
   const stopTour = useViewerStore((s) => s.stopTour);
   const seekTour = useViewerStore((s) => s.seekTour);
+  const isMobile = useIsMobile();
 
   if (tourStops.length === 0) return null;
 
@@ -42,13 +45,14 @@ export function TourPlayerBar() {
     <div
       style={{
         position: "fixed",
-        bottom: 16,
-        right: 16,
+        bottom: isMobile ? 8 : 16,
+        right: isMobile ? 8 : 16,
+        maxWidth: "calc(100vw - 16px)",
         zIndex: 20,
         display: "flex",
         alignItems: "center",
-        gap: 8,
-        padding: "8px 12px",
+        gap: isMobile ? 4 : 8,
+        padding: isMobile ? "6px 8px" : "8px 12px",
         background: theme.color.panel,
         border: `1px solid ${theme.color.border}`,
         borderRadius: theme.radius,
@@ -76,9 +80,18 @@ export function TourPlayerBar() {
         value={clampedTime}
         onChange={(e) => seekTour(Number(e.target.value))}
         disabled={totalDuration === 0}
-        style={{ width: 140, accentColor: theme.color.accent }}
+        style={{ width: isMobile ? 80 : 140, accentColor: theme.color.accent }}
       />
-      <span style={{ color: theme.color.textMuted, fontSize: 11, minWidth: 68, textAlign: "right", whiteSpace: "nowrap" }}>
+      <span
+        style={{
+          color: theme.color.textMuted,
+          fontSize: 11,
+          minWidth: isMobile ? 56 : 68,
+          textAlign: "right",
+          whiteSpace: "nowrap",
+          flexShrink: 0,
+        }}
+      >
         {formatTime(clampedTime)} / {formatTime(totalDuration)}
       </span>
     </div>

@@ -4,6 +4,7 @@ import { finalizeAreaPolygon } from "../viewer/interactions/MeasureAreaTool";
 import { finalizePolyline } from "../viewer/interactions/PolylineTool";
 import { exportUrl, exportAnnotationsUrl } from "../api/models";
 import { Dropdown, DropdownItem, DropdownLinkItem, DropdownDivider } from "./Dropdown";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { theme } from "../styles/theme";
 
 const TOOL_LABELS: Record<ActiveTool, string> = {
@@ -23,13 +24,23 @@ const TOOL_COLORS: Partial<Record<ActiveTool, string>> = {
   annotate: theme.color.severity.alta,
 };
 
-function FinishButton({ color, onClick, children }: { color: string; onClick: () => void; children: React.ReactNode }) {
+function FinishButton({
+  color,
+  onClick,
+  compact,
+  children,
+}: {
+  color: string;
+  onClick: () => void;
+  compact?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       style={{
-        padding: "8px 16px",
+        padding: compact ? "8px 10px" : "8px 16px",
         borderRadius: theme.radius,
         border: `1px solid ${color}`,
         background: color,
@@ -39,6 +50,7 @@ function FinishButton({ color, onClick, children }: { color: string; onClick: ()
         fontWeight: 600,
         fontFamily: theme.font,
         whiteSpace: "nowrap",
+        flexShrink: 0,
       }}
     >
       {children}
@@ -78,7 +90,7 @@ export function AdminUnlockMenu({ onUnlock }: { onUnlock: (password: string) => 
     <Dropdown label="🔒">
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8, width: 220 }}
+        style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8, width: "min(220px, calc(100vw - 48px))" }}
       >
         <span style={{ color: theme.color.textMuted, fontSize: 12 }}>Acceso de administrador</span>
         <input
@@ -88,13 +100,13 @@ export function AdminUnlockMenu({ onUnlock }: { onUnlock: (password: string) => 
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           placeholder="Clave"
           style={{
-            padding: "8px 10px",
+            padding: "10px 10px",
             borderRadius: theme.radius,
             border: `1px solid ${theme.color.border}`,
             background: theme.color.panelAlt,
             color: theme.color.text,
             fontFamily: theme.font,
-            fontSize: 13,
+            fontSize: 16,
             outline: "none",
           }}
         />
@@ -104,13 +116,13 @@ export function AdminUnlockMenu({ onUnlock }: { onUnlock: (password: string) => 
           onClick={handleSubmit}
           disabled={!password || checking}
           style={{
-            padding: "7px 10px",
+            padding: "10px 10px",
             borderRadius: theme.radius,
             border: "none",
             background: theme.color.accent,
             color: "#0b0d10",
             cursor: "pointer",
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 600,
             fontFamily: theme.font,
           }}
@@ -140,6 +152,7 @@ export function Toolbar({
   const modelId = useViewerStore((s) => s.modelId);
   const editingMeasurement = useViewerStore((s) => s.editingMeasurement);
   const removeLastPendingPoint = useViewerStore((s) => s.removeLastPendingPoint);
+  const isMobile = useIsMobile();
 
   const isMeasuringArea = activeTool === "measure-area";
   const isVectorizing = activeTool === "vectorize-polyline";
@@ -162,6 +175,37 @@ export function Toolbar({
             ? TOOL_LABELS[activeTool]
             : null;
 
+  const viewItems = (
+    <>
+      {hasLocation && <DropdownItem onClick={onToggleLocation}>Ubicación</DropdownItem>}
+      <DropdownItem onClick={onOpenDashboard}>Dashboard</DropdownItem>
+      {isAdmin && (
+        <>
+          <DropdownDivider />
+          <DropdownItem onClick={onOpenTourManager}>Gestionar recorrido de cámara</DropdownItem>
+        </>
+      )}
+    </>
+  );
+
+  const exportItems = modelId && (
+    <>
+      <DropdownLinkItem href={exportUrl(modelId, "dxf")}>Modelo vectorial — DXF</DropdownLinkItem>
+      <DropdownLinkItem href={exportUrl(modelId, "geojson")}>Modelo vectorial — GeoJSON</DropdownLinkItem>
+      <DropdownDivider />
+      <DropdownLinkItem href={exportAnnotationsUrl(modelId)}>Inventario de daños — CSV</DropdownLinkItem>
+    </>
+  );
+
+  const modelItems = isAdmin && (
+    <>
+      <DropdownItem onClick={onOpenManager}>Gestionar modelos</DropdownItem>
+      <DropdownItem onClick={onUploadNewModel}>Subir nuevo modelo</DropdownItem>
+      <DropdownDivider />
+      <DropdownItem onClick={onLock}>Cerrar sesión de administrador</DropdownItem>
+    </>
+  );
+
   return (
     <div
       style={{
@@ -169,39 +213,46 @@ export function Toolbar({
         top: 0,
         left: 0,
         right: 0,
-        height: 76,
+        height: isMobile ? 56 : 76,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 20px",
+        padding: isMobile ? "0 10px" : "0 20px",
         background: theme.color.panel,
         borderBottom: `1px solid ${theme.color.border}`,
         zIndex: 20,
         boxSizing: "border-box",
-        gap: 16,
+        gap: isMobile ? 8 : 16,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
-        <img src="/logo.png" alt="Logo" style={{ height: 57, width: "auto", display: "block" }} />
-        <div style={{ width: 1, height: 28, background: theme.color.border }} />
-        <span style={{ color: theme.color.textMuted, fontFamily: theme.font, fontSize: 13 }}>{modelName}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 14, flexShrink: 0, minWidth: 0 }}>
+        <img src="/logo.png" alt="Logo" style={{ height: isMobile ? 34 : 57, width: "auto", display: "block", flexShrink: 0 }} />
+        {!isMobile && (
+          <>
+            <div style={{ width: 1, height: 28, background: theme.color.border }} />
+            <span style={{ color: theme.color.textMuted, fontFamily: theme.font, fontSize: 13 }}>{modelName}</span>
+          </>
+        )}
       </div>
 
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: isMobile ? 6 : 8, alignItems: "center", minWidth: 0 }}>
         {editingMeasurement ? (
           <div
             style={{
-              padding: "8px 16px",
+              padding: isMobile ? "6px 10px" : "8px 16px",
               borderRadius: theme.radius,
               border: `1px solid ${theme.color.accent}`,
               color: theme.color.accent,
-              fontSize: 13,
+              fontSize: isMobile ? 11 : 13,
               fontWeight: 600,
               fontFamily: theme.font,
               whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              maxWidth: isMobile ? 150 : undefined,
             }}
           >
-            Editando vértices — guarda o cancela en la lista de mediciones
+            {isMobile ? "Editando…" : "Editando vértices — guarda o cancela en la lista de mediciones"}
           </div>
         ) : (
           <>
@@ -214,7 +265,8 @@ export function Toolbar({
                       style={{ width: 8, height: 8, borderRadius: "50%", background: activeToolColor, display: "inline-block" }}
                     />
                   )}
-                  Herramientas{toolStatus ? `: ${toolStatus}` : ""}
+                  {isMobile ? "Herr." : "Herramientas"}
+                  {toolStatus ? `: ${toolStatus}` : ""}
                 </>
               }
             >
@@ -237,56 +289,49 @@ export function Toolbar({
             </Dropdown>
 
             {canUndoPoint && (
-              <FinishButton color={theme.color.textMuted} onClick={() => removeLastPendingPoint()}>
-                ↩ Deshacer último punto
+              <FinishButton color={theme.color.textMuted} onClick={() => removeLastPendingPoint()} compact={isMobile}>
+                {isMobile ? "↩" : "↩ Deshacer último punto"}
               </FinishButton>
             )}
 
             {isMeasuringArea && pendingPoints.length >= 3 && (
-              <FinishButton color={theme.color.area} onClick={() => finalizeAreaPolygon()}>
-                Cerrar polígono
+              <FinishButton color={theme.color.area} onClick={() => finalizeAreaPolygon()} compact={isMobile}>
+                {isMobile ? "✓ Cerrar" : "Cerrar polígono"}
               </FinishButton>
             )}
             {isVectorizing && pendingPoints.length >= 2 && (
-              <FinishButton color={theme.color.polyline} onClick={() => finalizePolyline()}>
-                Finalizar polilínea
+              <FinishButton color={theme.color.polyline} onClick={() => finalizePolyline()} compact={isMobile}>
+                {isMobile ? "✓ Terminar" : "Finalizar polilínea"}
               </FinishButton>
             )}
           </>
         )}
 
-        <Dropdown label="Ver">
-          {hasLocation && (
-            <DropdownItem onClick={onToggleLocation}>Ubicación</DropdownItem>
-          )}
-          <DropdownItem onClick={onOpenDashboard}>Dashboard</DropdownItem>
-          {isAdmin && (
-            <>
-              <DropdownDivider />
-              <DropdownItem onClick={onOpenTourManager}>Gestionar recorrido de cámara</DropdownItem>
-            </>
-          )}
-        </Dropdown>
-
-        {modelId && (
-          <Dropdown label="Exportar">
-            <DropdownLinkItem href={exportUrl(modelId, "dxf")}>Modelo vectorial — DXF</DropdownLinkItem>
-            <DropdownLinkItem href={exportUrl(modelId, "geojson")}>Modelo vectorial — GeoJSON</DropdownLinkItem>
-            <DropdownDivider />
-            <DropdownLinkItem href={exportAnnotationsUrl(modelId)}>Inventario de daños — CSV</DropdownLinkItem>
-          </Dropdown>
-        )}
-
-        {isAdmin ? (
-          <Dropdown label="Modelo">
-            <DropdownItem onClick={onOpenManager}>Gestionar modelos</DropdownItem>
-            <DropdownItem onClick={onUploadNewModel}>Subir nuevo modelo</DropdownItem>
-            <DropdownDivider />
-            <DropdownItem onClick={onLock}>Cerrar sesión de administrador</DropdownItem>
+        {isMobile ? (
+          <Dropdown label="⋮">
+            {viewItems}
+            {exportItems && (
+              <>
+                <DropdownDivider />
+                {exportItems}
+              </>
+            )}
+            {modelItems && (
+              <>
+                <DropdownDivider />
+                {modelItems}
+              </>
+            )}
           </Dropdown>
         ) : (
-          <AdminUnlockMenu onUnlock={onUnlock} />
+          <>
+            <Dropdown label="Ver">{viewItems}</Dropdown>
+            {exportItems && <Dropdown label="Exportar">{exportItems}</Dropdown>}
+            {isAdmin && <Dropdown label="Modelo">{modelItems}</Dropdown>}
+          </>
         )}
+
+        {!isAdmin && <AdminUnlockMenu onUnlock={onUnlock} />}
       </div>
     </div>
   );

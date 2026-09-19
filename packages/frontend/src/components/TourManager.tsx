@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useViewerStore } from "../state/viewerStore";
 import { listTourStops, deleteTourStop, moveTourStop } from "../api/tourStops";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { theme } from "../styles/theme";
 
 interface TourManagerProps {
@@ -18,6 +19,8 @@ export function TourManager({ onClose }: TourManagerProps) {
   const [label, setLabel] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
+  const topOffset = isMobile ? 64 : 92;
 
   useEffect(() => {
     if (!modelId) return;
@@ -59,10 +62,10 @@ export function TourManager({ onClose }: TourManagerProps) {
     <div
       style={{
         position: "fixed",
-        top: 92,
-        left: 16,
-        width: 280,
-        maxHeight: "calc(100vh - 112px)",
+        top: topOffset,
+        left: isMobile ? 8 : 16,
+        width: isMobile ? "min(260px, calc(100vw - 16px))" : 280,
+        maxHeight: `calc(100vh - ${topOffset + 16}px)`,
         overflowY: "auto",
         background: theme.color.panel,
         border: `1px solid ${theme.color.border}`,

@@ -1,6 +1,7 @@
 import type { Severity, AnnotationStatus } from "@visor3d/shared";
 import { useViewerStore } from "../state/viewerStore";
 import { updateAnnotation, deleteAnnotation, photoUrl } from "../api/annotations";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { theme } from "../styles/theme";
 
 const SEVERITIES: { value: Severity | ""; label: string }[] = [
@@ -43,7 +44,10 @@ export function AnnotationDetail() {
   const removeAnnotation = useViewerStore((s) => s.removeAnnotation);
 
   const annotation = annotations.find((a) => a.id === selectedAnnotationId);
+  const isMobile = useIsMobile();
   if (!annotation) return null;
+
+  const topOffset = isMobile ? 64 : 92;
 
   const handleSeverityChange = (value: Severity | "") => {
     const severity = value === "" ? null : value;
@@ -65,10 +69,11 @@ export function AnnotationDetail() {
     <div
       style={{
         position: "fixed",
-        top: 92,
-        right: 292,
-        width: 280,
-        maxHeight: "calc(100vh - 112px)",
+        top: topOffset,
+        left: isMobile ? 8 : undefined,
+        right: isMobile ? undefined : 292,
+        width: isMobile ? "min(240px, calc(100vw - 16px))" : 280,
+        maxHeight: `calc(100vh - ${topOffset + 16}px)`,
         overflowY: "auto",
         background: theme.color.panel,
         border: `1px solid ${theme.color.border}`,

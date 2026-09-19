@@ -8,6 +8,7 @@ import {
   type StyleSpecification,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { theme } from "../styles/theme";
 
 interface LocationMapProps {
@@ -36,6 +37,7 @@ export function LocationMap({ latitude, longitude, modelName, onClose }: Locatio
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -69,8 +71,13 @@ export function LocationMap({ latitude, longitude, modelName, onClose }: Locatio
   }, [expanded]);
 
   const panelStyle: React.CSSProperties = expanded
-    ? { top: 92, right: 16, bottom: 16, left: 16 }
-    : { bottom: 16, left: 16, width: 320, height: 260 };
+    ? { top: isMobile ? 64 : 92, right: isMobile ? 8 : 16, bottom: isMobile ? 8 : 16, left: isMobile ? 8 : 16 }
+    : {
+        bottom: isMobile ? 8 : 16,
+        left: isMobile ? 8 : 16,
+        width: isMobile ? "min(280px, calc(100vw - 16px))" : 320,
+        height: isMobile ? 200 : 260,
+      };
 
   return (
     <div

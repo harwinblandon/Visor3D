@@ -106,6 +106,8 @@ export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManager
         justifyContent: "center",
         zIndex: 40,
         fontFamily: theme.font,
+        padding: 16,
+        boxSizing: "border-box",
       }}
     >
       <div
@@ -117,8 +119,9 @@ export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManager
           borderRadius: 12,
           background: theme.color.panel,
           border: `1px solid ${theme.color.border}`,
-          width: 580,
+          width: "min(580px, 100%)",
           maxHeight: "80vh",
+          boxSizing: "border-box",
           boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
         }}
       >

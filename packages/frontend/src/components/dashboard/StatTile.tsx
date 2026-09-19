@@ -10,7 +10,8 @@ export function StatTile({ label, value, color }: StatTileProps) {
   return (
     <div
       style={{
-        flex: 1,
+        flex: "1 1 140px",
+        minWidth: 140,
         background: theme.color.panel,
         border: `1px solid ${theme.color.border}`,
         borderRadius: theme.radius,

@@ -4,6 +4,7 @@ import { deleteMeasurement, updateMeasurement } from "../api/measurements";
 import { computeDistance, computePolylineLength } from "../viewer/math/distance";
 import { computeNewellArea } from "../viewer/math/polygonArea";
 import { circleFromPointArray, circleRadius } from "../viewer/math/circle";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { theme } from "../styles/theme";
 
 const LAYER_SUGGESTIONS = ["Paramentos", "Ventanas", "Puertas", "Vías", "Cubierta", "Estructura", "Acabados"];
@@ -265,15 +266,17 @@ export function MeasurementList() {
   };
 
   const isBusy = editingMeasurement !== null || metaEditingId !== null;
+  const isMobile = useIsMobile();
+  const topOffset = isMobile ? 64 : 92;
 
   return (
     <div
       style={{
         position: "fixed",
-        top: 92,
-        right: 16,
-        width: 280,
-        maxHeight: "calc(100vh - 112px)",
+        top: topOffset,
+        right: isMobile ? 8 : 16,
+        width: isMobile ? "min(240px, calc(100vw - 16px))" : 280,
+        maxHeight: `calc(100vh - ${topOffset + 16}px)`,
         overflowY: "auto",
         background: theme.color.panel,
         border: `1px solid ${theme.color.border}`,

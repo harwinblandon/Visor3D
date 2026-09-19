@@ -30,7 +30,10 @@ const cardStyle: React.CSSProperties = {
   borderRadius: 12,
   background: theme.color.panel,
   border: `1px solid ${theme.color.border}`,
-  width: 380,
+  width: "min(380px, 100%)",
+  maxHeight: "calc(100vh - 32px)",
+  overflowY: "auto",
+  boxSizing: "border-box",
   boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
 };
 
@@ -155,6 +158,8 @@ export function ModelUploadPanel({ isAdmin, onUnlock, onUploaded, onCancel }: Mo
         height: "100vh",
         fontFamily: theme.font,
         background: theme.color.bg,
+        padding: 16,
+        boxSizing: "border-box",
       }}
     >
       {!isAdmin ? (

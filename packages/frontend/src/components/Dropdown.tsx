@@ -53,12 +53,15 @@ export function Dropdown({ label, accentColor, children }: DropdownProps) {
             top: "calc(100% + 6px)",
             right: 0,
             minWidth: 200,
+            maxWidth: "calc(100vw - 24px)",
+            maxHeight: "calc(100vh - 88px)",
             background: theme.color.panel,
             border: `1px solid ${theme.color.border}`,
             borderRadius: theme.radius,
             boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
             zIndex: 30,
-            overflow: "hidden",
+            overflowX: "hidden",
+            overflowY: "auto",
           }}
         >
           {children}

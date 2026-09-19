@@ -24,6 +24,7 @@ interface Viewer3DProps {
   model: Model;
   onOpenDashboard: () => void;
   onUploadNewModel: () => void;
+  onOpenManager: () => void;
   isAdmin: boolean;
   onUnlock: (password: string) => Promise<boolean>;
   onLock: () => void;
@@ -33,6 +34,7 @@ export function Viewer3D({
   model,
   onOpenDashboard,
   onUploadNewModel,
+  onOpenManager,
   isAdmin,
   onUnlock,
   onLock,
@@ -112,6 +114,7 @@ export function Viewer3D({
         modelName={model.name}
         onOpenDashboard={onOpenDashboard}
         onUploadNewModel={onUploadNewModel}
+        onOpenManager={onOpenManager}
         hasLocation={hasLocation}
         onToggleLocation={() => setShowLocationMap((v) => !v)}
         isAdmin={isAdmin}

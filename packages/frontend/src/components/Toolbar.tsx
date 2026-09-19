@@ -48,6 +48,7 @@ interface ToolbarProps {
   modelName: string;
   onOpenDashboard: () => void;
   onUploadNewModel: () => void;
+  onOpenManager: () => void;
   hasLocation: boolean;
   onToggleLocation: () => void;
   isAdmin: boolean;
@@ -122,6 +123,7 @@ export function Toolbar({
   modelName,
   onOpenDashboard,
   onUploadNewModel,
+  onOpenManager,
   hasLocation,
   onToggleLocation,
   isAdmin,
@@ -234,6 +236,7 @@ export function Toolbar({
 
         {isAdmin ? (
           <Dropdown label="Modelo">
+            <DropdownItem onClick={onOpenManager}>Gestionar modelos</DropdownItem>
             <DropdownItem onClick={onUploadNewModel}>Subir nuevo modelo</DropdownItem>
             <DropdownDivider />
             <DropdownItem onClick={onLock}>Cerrar sesión de administrador</DropdownItem>

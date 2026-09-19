@@ -3,6 +3,7 @@ import type { Model } from "@visor3d/shared";
 import { Viewer3D } from "./viewer/Viewer3D";
 import { ModelUploadPanel } from "./components/ModelUploadPanel";
 import { DashboardPage } from "./components/dashboard/DashboardPage";
+import { ModelManager } from "./components/ModelManager";
 import { getActiveModel } from "./api/models";
 import { getStoredAdminKey, setStoredAdminKey, verifyAdminKey } from "./api/auth";
 
@@ -13,6 +14,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>("viewer");
   const [isAdmin, setIsAdmin] = useState(() => !!getStoredAdminKey());
+  const [isManagerOpen, setIsManagerOpen] = useState(false);
 
   useEffect(() => {
     getActiveModel()
@@ -56,14 +58,30 @@ function App() {
   }
 
   return (
-    <Viewer3D
-      model={model}
-      onOpenDashboard={() => setView("dashboard")}
-      onUploadNewModel={() => setView("upload")}
-      isAdmin={isAdmin}
-      onUnlock={handleUnlock}
-      onLock={handleLock}
-    />
+    <>
+      <Viewer3D
+        model={model}
+        onOpenDashboard={() => setView("dashboard")}
+        onUploadNewModel={() => setView("upload")}
+        onOpenManager={() => setIsManagerOpen(true)}
+        isAdmin={isAdmin}
+        onUnlock={handleUnlock}
+        onLock={handleLock}
+      />
+      {isManagerOpen && (
+        <ModelManager
+          onClose={() => setIsManagerOpen(false)}
+          onUploadNew={() => {
+            setIsManagerOpen(false);
+            setView("upload");
+          }}
+          onActivated={(activated) => {
+            setModel(activated);
+            setIsManagerOpen(false);
+          }}
+        />
+      )}
+    </>
   );
 }
 

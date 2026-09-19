@@ -10,5 +10,7 @@ modelsRouter.post("/", requireAdmin, uploadModelMiddleware.single("file"), contr
 modelsRouter.get("/", controller.listModels);
 modelsRouter.get("/active", controller.getActiveModel);
 modelsRouter.get("/:id", controller.getModelById);
+modelsRouter.patch("/:id/activate", requireAdmin, controller.activateModel);
+modelsRouter.delete("/:id", requireAdmin, controller.deleteModel);
 modelsRouter.get("/:id/export", exportModel);
 modelsRouter.get("/:id/export-annotations", exportAnnotations);

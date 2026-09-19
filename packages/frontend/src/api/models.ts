@@ -36,6 +36,22 @@ export function uploadModel(input: UploadModelInput): Promise<Model> {
   });
 }
 
+export function activateModel(id: string): Promise<Model> {
+  const adminKey = getStoredAdminKey();
+  return apiFetch<Model>(`/api/models/${id}/activate`, {
+    method: "PATCH",
+    headers: adminKey ? { "x-admin-key": adminKey } : undefined,
+  });
+}
+
+export function deleteModel(id: string): Promise<void> {
+  const adminKey = getStoredAdminKey();
+  return apiFetch<void>(`/api/models/${id}`, {
+    method: "DELETE",
+    headers: adminKey ? { "x-admin-key": adminKey } : undefined,
+  });
+}
+
 export function modelFileUrl(model: Model): string {
   return `/uploads/${model.filePath}`;
 }

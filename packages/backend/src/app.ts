@@ -9,6 +9,7 @@ import { measurementsRouter } from "./routes/measurements.routes.js";
 import { annotationsRouter } from "./routes/annotations.routes.js";
 import { statsRouter } from "./routes/stats.routes.js";
 import { authRouter } from "./routes/auth.routes.js";
+import { env } from "./config/env.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.join(__dirname, "..", "uploads");
@@ -33,5 +34,15 @@ app.use("/api/measurements", measurementsRouter);
 app.use("/api/annotations", annotationsRouter);
 app.use("/api/stats", statsRouter);
 app.use("/api/auth", authRouter);
+
+// En producción el backend también sirve el build estático del frontend
+// (un solo servicio desplegable). En desarrollo esto queda vacío y el
+// frontend lo sirve Vite por separado en su propio puerto.
+if (env.frontendDistPath) {
+  app.use(express.static(env.frontendDistPath));
+  app.get(/^(?!\/api|\/uploads).*/, (_req, res) => {
+    res.sendFile(path.join(env.frontendDistPath, "index.html"));
+  });
+}
 
 app.use(errorHandler);

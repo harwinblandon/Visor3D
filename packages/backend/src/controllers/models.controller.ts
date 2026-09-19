@@ -1,5 +1,19 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { unlink } from "node:fs/promises";
 import type { Request, Response, NextFunction } from "express";
 import * as modelsService from "../services/models.service.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadsRoot = path.join(__dirname, "..", "..", "uploads");
+
+async function safeUnlink(relativePath: string) {
+  try {
+    await unlink(path.join(uploadsRoot, relativePath));
+  } catch (err) {
+    console.error(`No se pudo borrar el archivo ${relativePath}:`, err);
+  }
+}
 
 export async function uploadModel(req: Request, res: Response, next: NextFunction) {
   try {
@@ -53,6 +67,30 @@ export async function getModelById(req: Request, res: Response, next: NextFuncti
     const model = await modelsService.getModelById(req.params.id);
     if (!model) return res.status(404).json({ error: "Modelo no encontrado" });
     res.json(model);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function activateModel(req: Request, res: Response, next: NextFunction) {
+  try {
+    const model = await modelsService.setActiveModel(req.params.id);
+    if (!model) return res.status(404).json({ error: "Modelo no encontrado" });
+    res.json(model);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteModel(req: Request, res: Response, next: NextFunction) {
+  try {
+    const deleted = await modelsService.deleteModel(req.params.id);
+    if (!deleted) return res.status(404).json({ error: "Modelo no encontrado" });
+
+    await safeUnlink(deleted.modelFilePath);
+    await Promise.all(deleted.photoFilePaths.map((p) => safeUnlink(p)));
+
+    res.status(204).send();
   } catch (err) {
     next(err);
   }

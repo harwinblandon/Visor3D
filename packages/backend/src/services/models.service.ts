@@ -90,3 +90,49 @@ export async function getModelById(id: string): Promise<Model | null> {
   const { rows } = await pool.query<ModelRow>("SELECT * FROM models WHERE id = $1", [id]);
   return rows[0] ? mapRow(rows[0]) : null;
 }
+
+export async function setActiveModel(id: string): Promise<Model | null> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("UPDATE models SET is_active = false WHERE is_active = true");
+    const { rows } = await client.query<ModelRow>(
+      "UPDATE models SET is_active = true WHERE id = $1 RETURNING *",
+      [id],
+    );
+    await client.query("COMMIT");
+    return rows[0] ? mapRow(rows[0]) : null;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export interface DeletedModelFiles {
+  modelFilePath: string;
+  photoFilePaths: string[];
+}
+
+export async function deleteModel(id: string): Promise<DeletedModelFiles | null> {
+  const model = await getModelById(id);
+  if (!model) return null;
+
+  const { rows: photoRows } = await pool.query<{ file_path: string }>(
+    `SELECT ap.file_path
+     FROM annotation_photos ap
+     JOIN annotations a ON a.id = ap.annotation_id
+     WHERE a.model_id = $1`,
+    [id],
+  );
+
+  // El borrado en cascada (measurements, annotations, annotation_photos) queda
+  // a cargo de las FK ON DELETE CASCADE definidas en las migraciones.
+  await pool.query("DELETE FROM models WHERE id = $1", [id]);
+
+  return {
+    modelFilePath: model.filePath,
+    photoFilePaths: photoRows.map((r) => r.file_path),
+  };
+}

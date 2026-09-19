@@ -68,6 +68,16 @@ export interface Annotation {
   photos: AnnotationPhoto[];
 }
 
+export interface TourStop {
+  id: string;
+  modelId: string;
+  orderIndex: number;
+  position: Point3D;
+  target: Point3D;
+  label: string | null;
+  createdAt: string;
+}
+
 export interface StatsSummary {
   totalAnnotations: number;
   byType: Record<string, number>;

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Vector3 } from "three";
-import type { Annotation } from "@visor3d/shared";
+import type { Annotation, TourStop } from "@visor3d/shared";
 
 export type ActiveTool =
   | "none"
@@ -69,6 +69,9 @@ interface ViewerState {
   editingMeasurement: EditingMeasurement | null;
   draggingIndex: number | null;
   lastCreatedMeasurementId: string | null;
+  tourStops: TourStop[];
+  isTouring: boolean;
+  pendingTourCapture: { label: string | null } | null;
   setModelId: (modelId: string | null) => void;
   setActiveTool: (tool: ActiveTool) => void;
   addPendingPoint: (point: Vector3) => void;
@@ -97,6 +100,13 @@ interface ViewerState {
   startDrag: (index: number) => void;
   endDrag: () => void;
   updateDragPoint: (point: Vector3) => void;
+  setTourStops: (stops: TourStop[]) => void;
+  addTourStop: (stop: TourStop) => void;
+  removeTourStop: (id: string) => void;
+  requestTourCapture: (label: string | null) => void;
+  clearTourCaptureRequest: () => void;
+  startTour: () => void;
+  stopTour: () => void;
 }
 
 export const useViewerStore = create<ViewerState>((set) => ({
@@ -114,6 +124,9 @@ export const useViewerStore = create<ViewerState>((set) => ({
   editingMeasurement: null,
   draggingIndex: null,
   lastCreatedMeasurementId: null,
+  tourStops: [],
+  isTouring: false,
+  pendingTourCapture: null,
 
   setModelId: (modelId) => set({ modelId }),
 
@@ -270,4 +283,19 @@ export const useViewerStore = create<ViewerState>((set) => ({
       points[state.draggingIndex] = point;
       return { pendingPoints: points };
     }),
+
+  setTourStops: (stops) => set({ tourStops: stops }),
+
+  addTourStop: (stop) => set((state) => ({ tourStops: [...state.tourStops, stop] })),
+
+  removeTourStop: (id) =>
+    set((state) => ({ tourStops: state.tourStops.filter((s) => s.id !== id) })),
+
+  requestTourCapture: (label) => set({ pendingTourCapture: { label } }),
+
+  clearTourCaptureRequest: () => set({ pendingTourCapture: null }),
+
+  startTour: () => set((state) => (state.tourStops.length > 0 ? { isTouring: true } : {})),
+
+  stopTour: () => set({ isTouring: false }),
 }));

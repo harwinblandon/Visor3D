@@ -9,16 +9,19 @@ import { MeasureAreaTool, finalizeAreaPolygon } from "./interactions/MeasureArea
 import { PolylineTool, finalizePolyline } from "./interactions/PolylineTool";
 import { CircleTool } from "./interactions/CircleTool";
 import { AnnotationTool } from "./interactions/AnnotationTool";
+import { CameraTourController } from "./CameraTourController";
 import { Toolbar } from "../components/Toolbar";
 import { MeasurementList } from "../components/MeasurementList";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { AnnotationForm } from "../components/AnnotationForm";
 import { AnnotationDetail } from "../components/AnnotationDetail";
 import { LocationMap } from "../components/LocationMap";
+import { TourManager } from "../components/TourManager";
 import { useViewerStore } from "../state/viewerStore";
 import { modelFileUrl } from "../api/models";
 import { listMeasurements } from "../api/measurements";
 import { listAnnotations } from "../api/annotations";
+import { listTourStops } from "../api/tourStops";
 import { theme } from "../styles/theme";
 
 interface Viewer3DProps {
@@ -42,7 +45,13 @@ export function Viewer3D({
 }: Viewer3DProps) {
   const [bounds, setBounds] = useState<{ center: Vector3; size: Vector3 } | null>(null);
   const [showLocationMap, setShowLocationMap] = useState(false);
+  const [isTourManagerOpen, setIsTourManagerOpen] = useState(false);
   const hasLocation = model.latitude !== null && model.longitude !== null;
+  const tourStops = useViewerStore((s) => s.tourStops);
+  const setTourStops = useViewerStore((s) => s.setTourStops);
+  const isTouring = useViewerStore((s) => s.isTouring);
+  const startTour = useViewerStore((s) => s.startTour);
+  const stopTour = useViewerStore((s) => s.stopTour);
   const activeTool = useViewerStore((s) => s.activeTool);
   const pendingPoints = useViewerStore((s) => s.pendingPoints);
   const addPendingPoint = useViewerStore((s) => s.addPendingPoint);
@@ -124,7 +133,11 @@ export function Viewer3D({
     listAnnotations(model.id)
       .then(setAnnotations)
       .catch((err) => console.error("No se pudieron cargar las anotaciones guardadas:", err));
-  }, [model.id, setModelId, setAnnotations]);
+
+    listTourStops(model.id)
+      .then(setTourStops)
+      .catch((err) => console.error("No se pudo cargar el recorrido:", err));
+  }, [model.id, setModelId, setAnnotations, setTourStops]);
 
   const handleSurfaceClick = (point: Vector3, normal: Vector3 | null) => {
     if (activeTool === "measure-distance" || activeTool === "measure-area" || activeTool === "vectorize-polyline") {
@@ -164,6 +177,9 @@ export function Viewer3D({
         isAdmin={isAdmin}
         onUnlock={onUnlock}
         onLock={onLock}
+        hasTour={tourStops.length > 0}
+        onStartTour={startTour}
+        onOpenTourManager={() => setIsTourManagerOpen(true)}
       />
       <MeasurementList />
       <AnnotationDetail />
@@ -176,6 +192,32 @@ export function Viewer3D({
           modelName={model.name}
           onClose={() => setShowLocationMap(false)}
         />
+      )}
+      {isTourManagerOpen && <TourManager onClose={() => setIsTourManagerOpen(false)} />}
+      {isTouring && (
+        <button
+          type="button"
+          onClick={stopTour}
+          style={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 25,
+            padding: "10px 20px",
+            borderRadius: theme.radius,
+            border: "none",
+            background: theme.color.danger,
+            color: "#fff",
+            cursor: "pointer",
+            fontSize: 13,
+            fontWeight: 600,
+            fontFamily: theme.font,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+          }}
+        >
+          ⏹ Detener recorrido
+        </button>
       )}
       <Canvas camera={{ fov: 50 }}>
         <color attach="background" args={[theme.color.bgCanvas]} />
@@ -198,6 +240,7 @@ export function Viewer3D({
         <PolylineTool />
         <CircleTool />
         <AnnotationTool />
+        <CameraTourController />
         <CameraRig target={bounds} />
       </Canvas>
     </div>

@@ -13,6 +13,7 @@ export function CameraRig({ target }: CameraRigProps) {
   const { camera } = useThree();
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const isDragging = useViewerStore((s) => s.draggingIndex !== null);
+  const isTouring = useViewerStore((s) => s.isTouring);
 
   useEffect(() => {
     if (!target || !controlsRef.current) return;
@@ -35,5 +36,5 @@ export function CameraRig({ target }: CameraRigProps) {
     controlsRef.current.update();
   }, [target, camera]);
 
-  return <OrbitControls ref={controlsRef} makeDefault enableDamping enabled={!isDragging} />;
+  return <OrbitControls ref={controlsRef} makeDefault enableDamping enabled={!isDragging && !isTouring} />;
 }

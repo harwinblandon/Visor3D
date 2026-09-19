@@ -56,6 +56,9 @@ interface ToolbarProps {
   isAdmin: boolean;
   onUnlock: (password: string) => Promise<boolean>;
   onLock: () => void;
+  hasTour: boolean;
+  onStartTour: () => void;
+  onOpenTourManager: () => void;
 }
 
 export function AdminUnlockMenu({ onUnlock }: { onUnlock: (password: string) => Promise<boolean> }) {
@@ -131,6 +134,9 @@ export function Toolbar({
   isAdmin,
   onUnlock,
   onLock,
+  hasTour,
+  onStartTour,
+  onOpenTourManager,
 }: ToolbarProps) {
   const activeTool = useViewerStore((s) => s.activeTool);
   const setActiveTool = useViewerStore((s) => s.setActiveTool);
@@ -258,6 +264,13 @@ export function Toolbar({
             <DropdownItem onClick={onToggleLocation}>Ubicación</DropdownItem>
           )}
           <DropdownItem onClick={onOpenDashboard}>Dashboard</DropdownItem>
+          {hasTour && <DropdownItem onClick={onStartTour}>▶ Iniciar recorrido</DropdownItem>}
+          {isAdmin && (
+            <>
+              <DropdownDivider />
+              <DropdownItem onClick={onOpenTourManager}>Gestionar recorrido de cámara</DropdownItem>
+            </>
+          )}
         </Dropdown>
 
         {modelId && (

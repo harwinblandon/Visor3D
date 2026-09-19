@@ -9,6 +9,7 @@ import { measurementsRouter } from "./routes/measurements.routes.js";
 import { annotationsRouter } from "./routes/annotations.routes.js";
 import { statsRouter } from "./routes/stats.routes.js";
 import { authRouter } from "./routes/auth.routes.js";
+import { tourStopsRouter } from "./routes/tourStops.routes.js";
 import { env } from "./config/env.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -34,6 +35,7 @@ app.use("/api/measurements", measurementsRouter);
 app.use("/api/annotations", annotationsRouter);
 app.use("/api/stats", statsRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/tour-stops", tourStopsRouter);
 
 // En producción el backend también sirve el build estático del frontend
 // (un solo servicio desplegable). En desarrollo esto queda vacío y el

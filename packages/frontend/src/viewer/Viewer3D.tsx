@@ -7,6 +7,7 @@ import { CameraRig } from "./CameraRig";
 import { MeasureDistanceTool } from "./interactions/MeasureDistanceTool";
 import { MeasureAreaTool, finalizeAreaPolygon } from "./interactions/MeasureAreaTool";
 import { PolylineTool, finalizePolyline } from "./interactions/PolylineTool";
+import { CircleTool } from "./interactions/CircleTool";
 import { AnnotationTool } from "./interactions/AnnotationTool";
 import { Toolbar } from "../components/Toolbar";
 import { MeasurementList } from "../components/MeasurementList";
@@ -43,10 +44,12 @@ export function Viewer3D({
   const [showLocationMap, setShowLocationMap] = useState(false);
   const hasLocation = model.latitude !== null && model.longitude !== null;
   const activeTool = useViewerStore((s) => s.activeTool);
+  const pendingPoints = useViewerStore((s) => s.pendingPoints);
   const addPendingPoint = useViewerStore((s) => s.addPendingPoint);
   const setModelId = useViewerStore((s) => s.setModelId);
   const setPendingAnnotation = useViewerStore((s) => s.setPendingAnnotation);
   const setAnnotations = useViewerStore((s) => s.setAnnotations);
+  const setPendingCircleNormal = useViewerStore((s) => s.setPendingCircleNormal);
   const draggingIndex = useViewerStore((s) => s.draggingIndex);
   const updateDragPoint = useViewerStore((s) => s.updateDragPoint);
   const endDrag = useViewerStore((s) => s.endDrag);
@@ -103,7 +106,18 @@ export function Viewer3D({
             note: r.note,
           }));
 
-        useViewerStore.setState({ distanceMeasurements, areaMeasurements, polylineMeasurements });
+        const circleMeasurements = rows
+          .filter((r) => r.type === "circle")
+          .map((r) => ({
+            id: r.id,
+            points: r.points.map((p) => new Vector3(p.x, p.y, p.z)),
+            radius: r.value,
+            label: r.label,
+            layer: r.layer,
+            note: r.note,
+          }));
+
+        useViewerStore.setState({ distanceMeasurements, areaMeasurements, polylineMeasurements, circleMeasurements });
       })
       .catch((err) => console.error("No se pudieron cargar las mediciones guardadas:", err));
 
@@ -114,6 +128,9 @@ export function Viewer3D({
 
   const handleSurfaceClick = (point: Vector3, normal: Vector3 | null) => {
     if (activeTool === "measure-distance" || activeTool === "measure-area" || activeTool === "vectorize-polyline") {
+      addPendingPoint(point.clone());
+    } else if (activeTool === "measure-circle") {
+      if (pendingPoints.length === 0 && normal) setPendingCircleNormal(normal.clone());
       addPendingPoint(point.clone());
     } else if (activeTool === "annotate") {
       setPendingAnnotation({ point: point.clone(), normal: normal ? normal.clone() : null });
@@ -179,6 +196,7 @@ export function Viewer3D({
         <MeasureDistanceTool />
         <MeasureAreaTool />
         <PolylineTool />
+        <CircleTool />
         <AnnotationTool />
         <CameraRig target={bounds} />
       </Canvas>

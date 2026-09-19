@@ -3,6 +3,7 @@ import { useViewerStore, type EditingMeasurementType, type MeasurementMeta } fro
 import { deleteMeasurement, updateMeasurement } from "../api/measurements";
 import { computeDistance, computePolylineLength } from "../viewer/math/distance";
 import { computeNewellArea } from "../viewer/math/polygonArea";
+import { circleFromPointArray, circleRadius } from "../viewer/math/circle";
 import { theme } from "../styles/theme";
 
 const LAYER_SUGGESTIONS = ["Paramentos", "Ventanas", "Puertas", "Vías", "Cubierta", "Estructura", "Acabados"];
@@ -199,9 +200,11 @@ export function MeasurementList() {
   const distanceMeasurements = useViewerStore((s) => s.distanceMeasurements);
   const areaMeasurements = useViewerStore((s) => s.areaMeasurements);
   const polylineMeasurements = useViewerStore((s) => s.polylineMeasurements);
+  const circleMeasurements = useViewerStore((s) => s.circleMeasurements);
   const removeDistanceMeasurement = useViewerStore((s) => s.removeDistanceMeasurement);
   const removeAreaMeasurement = useViewerStore((s) => s.removeAreaMeasurement);
   const removePolylineMeasurement = useViewerStore((s) => s.removePolylineMeasurement);
+  const removeCircleMeasurement = useViewerStore((s) => s.removeCircleMeasurement);
   const editingMeasurement = useViewerStore((s) => s.editingMeasurement);
   const startEditingMeasurement = useViewerStore((s) => s.startEditingMeasurement);
   const cancelEditingMeasurement = useViewerStore((s) => s.cancelEditingMeasurement);
@@ -216,7 +219,10 @@ export function MeasurementList() {
   }, [lastCreatedMeasurementId]);
 
   const isEmpty =
-    distanceMeasurements.length === 0 && areaMeasurements.length === 0 && polylineMeasurements.length === 0;
+    distanceMeasurements.length === 0 &&
+    areaMeasurements.length === 0 &&
+    polylineMeasurements.length === 0 &&
+    circleMeasurements.length === 0;
 
   const withDelete = (removeLocal: (id: string) => void) => (id: string) => {
     removeLocal(id);
@@ -226,6 +232,7 @@ export function MeasurementList() {
   const handleDeleteDistance = withDelete(removeDistanceMeasurement);
   const handleDeleteArea = withDelete(removeAreaMeasurement);
   const handleDeletePolyline = withDelete(removePolylineMeasurement);
+  const handleDeleteCircle = withDelete(removeCircleMeasurement);
 
   const handleSaveVertices = async () => {
     if (!editingMeasurement) return;
@@ -235,7 +242,9 @@ export function MeasurementList() {
         ? computeDistance(points[0], points[1])
         : type === "area"
           ? computeNewellArea(points).area
-          : computePolylineLength(points);
+          : type === "circle"
+            ? circleRadius(circleFromPointArray(points))
+            : computePolylineLength(points);
 
     try {
       await updateMeasurement(id, { points: points.map((p) => ({ x: p.x, y: p.y, z: p.z })), value });
@@ -351,6 +360,25 @@ export function MeasurementList() {
           onSaveMeta={(patch) => handleSaveMeta(m.id, "polyline", patch)}
           onCancelMeta={() => setMetaEditingId(null)}
           onDelete={() => handleDeletePolyline(m.id)}
+        />
+      ))}
+
+      {circleMeasurements.map((m) => (
+        <Row
+          key={m.id}
+          color={theme.color.circle}
+          value={`r=${m.radius.toFixed(2)} m`}
+          meta={m}
+          editingVertices={editingMeasurement?.type === "circle" && editingMeasurement.id === m.id}
+          editingMeta={metaEditingId === m.id}
+          disabled={isBusy}
+          onEditVertices={() => !isBusy && startEditingMeasurement({ id: m.id, type: "circle", points: m.points.map((p) => p.clone()) })}
+          onSaveVertices={handleSaveVertices}
+          onCancelVertices={cancelEditingMeasurement}
+          onOpenMeta={() => !isBusy && setMetaEditingId(m.id)}
+          onSaveMeta={(patch) => handleSaveMeta(m.id, "circle", patch)}
+          onCancelMeta={() => setMetaEditingId(null)}
+          onDelete={() => handleDeleteCircle(m.id)}
         />
       ))}
     </div>

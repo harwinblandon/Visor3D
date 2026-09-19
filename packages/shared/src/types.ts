@@ -20,7 +20,7 @@ export interface Model {
   uploadedAt: string;
 }
 
-export type MeasurementType = "distance" | "area" | "polyline";
+export type MeasurementType = "distance" | "area" | "polyline" | "circle";
 
 export interface Measurement {
   id: string;

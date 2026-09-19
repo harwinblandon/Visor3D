@@ -14,6 +14,7 @@ COPY packages/shared packages/shared
 COPY packages/backend packages/backend
 COPY packages/frontend packages/frontend
 
+RUN npm run build --workspace=@visor3d/shared
 RUN npm run build --workspace=backend
 RUN cp -r packages/backend/src/db/migrations packages/backend/dist/db/migrations
 RUN npm run build --workspace=frontend

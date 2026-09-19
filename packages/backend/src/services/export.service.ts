@@ -1,16 +1,19 @@
 import Drawing from "dxf-writer";
-import type { Measurement, Annotation } from "@visor3d/shared";
+import type { Measurement, Annotation, Point3D } from "@visor3d/shared";
+import { circleFromPoints, circlePolygon } from "@visor3d/shared";
 
 const LAYER_BY_TYPE: Record<Measurement["type"], string> = {
   distance: "Distancias",
   area: "Areas",
   polyline: "Polilineas",
+  circle: "Circulos",
 };
 
 const COLOR_BY_TYPE: Record<Measurement["type"], number> = {
   distance: Drawing.ACI.YELLOW,
   area: Drawing.ACI.CYAN,
   polyline: Drawing.ACI.WHITE,
+  circle: Drawing.ACI.MAGENTA,
 };
 
 function resolveLayerName(m: Measurement): string {
@@ -18,9 +21,17 @@ function resolveLayerName(m: Measurement): string {
   return custom ? custom : LAYER_BY_TYPE[m.type];
 }
 
+/** Puntos "reales" de la geometría de una medición, expandiendo círculos a un polígono aproximado. */
+function geometryPoints(m: Measurement): Point3D[] {
+  if (m.type === "circle") {
+    return circlePolygon(circleFromPoints(m.points));
+  }
+  return m.points;
+}
+
 function featurePoints(m: Measurement): Array<[number, number, number]> {
-  const pts = m.points.map((p) => [p.x, p.y, p.z] as [number, number, number]);
-  if (m.type === "area" && pts.length > 0) {
+  const pts = geometryPoints(m).map((p) => [p.x, p.y, p.z] as [number, number, number]);
+  if ((m.type === "area" || m.type === "circle") && pts.length > 0) {
     return [...pts, pts[0]];
   }
   return pts;
@@ -125,7 +136,7 @@ export function buildGeoJSON(measurements: Measurement[]): object {
         createdAt: m.createdAt,
       },
       geometry:
-        m.type === "area"
+        m.type === "area" || m.type === "circle"
           ? { type: "Polygon", coordinates: [featurePoints(m)] }
           : { type: "LineString", coordinates: featurePoints(m) },
     })),

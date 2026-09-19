@@ -11,6 +11,8 @@ import { getStoredAdminKey, setStoredAdminKey, verifyAdminKey } from "./api/auth
 type View = "viewer" | "dashboard" | "upload";
 
 const sharedModelId = window.location.pathname.match(/^\/m\/([^/]+)/)?.[1] ?? null;
+const ADMIN_IDLE_LOGOUT_MS = 2 * 60 * 1000;
+const ACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "wheel"] as const;
 
 function App() {
   const [model, setModel] = useState<Model | null>(null);
@@ -48,6 +50,24 @@ function App() {
     setStoredAdminKey(null);
     setIsAdmin(false);
   };
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    let timer: ReturnType<typeof setTimeout>;
+    const resetTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(handleLock, ADMIN_IDLE_LOGOUT_MS);
+    };
+
+    resetTimer();
+    for (const event of ACTIVITY_EVENTS) window.addEventListener(event, resetTimer, { passive: true });
+
+    return () => {
+      clearTimeout(timer);
+      for (const event of ACTIVITY_EVENTS) window.removeEventListener(event, resetTimer);
+    };
+  }, [isAdmin]);
 
   if (loading) return null;
 

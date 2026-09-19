@@ -11,6 +11,7 @@ const TOOL_LABELS: Record<ActiveTool, string> = {
   "measure-distance": "Medir distancia",
   "measure-area": "Medir área",
   "vectorize-polyline": "Polilínea",
+  "measure-circle": "Círculo (centro + radio)",
   annotate: "Anotar daño",
 };
 
@@ -18,6 +19,7 @@ const TOOL_COLORS: Partial<Record<ActiveTool, string>> = {
   "measure-distance": theme.color.distance,
   "measure-area": theme.color.area,
   "vectorize-polyline": theme.color.polyline,
+  "measure-circle": theme.color.circle,
   annotate: theme.color.severity.alta,
 };
 
@@ -140,13 +142,16 @@ export function Toolbar({
   const isMeasuringArea = activeTool === "measure-area";
   const isVectorizing = activeTool === "vectorize-polyline";
   const isMeasuringDistance = activeTool === "measure-distance";
+  const isMeasuringCircle = activeTool === "measure-circle";
   const activeToolColor = activeTool !== "none" ? TOOL_COLORS[activeTool] : undefined;
   const canUndoPoint =
-    (isMeasuringDistance || isMeasuringArea || isVectorizing) && pendingPoints.length > 0;
+    (isMeasuringDistance || isMeasuringArea || isVectorizing || isMeasuringCircle) && pendingPoints.length > 0;
 
   const toolStatus =
-    activeTool === "measure-distance" && pendingPoints.length === 1
-      ? "clic en el 2° punto"
+    (activeTool === "measure-distance" || activeTool === "measure-circle") && pendingPoints.length === 1
+      ? activeTool === "measure-circle"
+        ? "clic para definir el radio"
+        : "clic en el 2° punto"
       : activeTool === "measure-area"
         ? `${pendingPoints.length} pto(s)`
         : activeTool === "vectorize-polyline"

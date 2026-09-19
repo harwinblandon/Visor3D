@@ -2,7 +2,13 @@ import { create } from "zustand";
 import type { Vector3 } from "three";
 import type { Annotation } from "@visor3d/shared";
 
-export type ActiveTool = "none" | "measure-distance" | "measure-area" | "vectorize-polyline" | "annotate";
+export type ActiveTool =
+  | "none"
+  | "measure-distance"
+  | "measure-area"
+  | "vectorize-polyline"
+  | "measure-circle"
+  | "annotate";
 
 export interface PendingAnnotation {
   point: Vector3;
@@ -33,7 +39,14 @@ export interface PolylineMeasurement extends MeasurementMeta {
   length: number;
 }
 
-export type EditingMeasurementType = "distance" | "area" | "polyline";
+/** points: [centro, borde, centro+normal] — ver viewer/math/circle.ts */
+export interface CircleMeasurement extends MeasurementMeta {
+  id: string;
+  points: Vector3[];
+  radius: number;
+}
+
+export type EditingMeasurementType = "distance" | "area" | "polyline" | "circle";
 
 export interface EditingMeasurement {
   id: string;
@@ -45,9 +58,11 @@ interface ViewerState {
   modelId: string | null;
   activeTool: ActiveTool;
   pendingPoints: Vector3[];
+  pendingCircleNormal: Vector3 | null;
   distanceMeasurements: DistanceMeasurement[];
   areaMeasurements: AreaMeasurement[];
   polylineMeasurements: PolylineMeasurement[];
+  circleMeasurements: CircleMeasurement[];
   annotations: Annotation[];
   pendingAnnotation: PendingAnnotation | null;
   selectedAnnotationId: string | null;
@@ -59,12 +74,15 @@ interface ViewerState {
   addPendingPoint: (point: Vector3) => void;
   clearPendingPoints: () => void;
   removeLastPendingPoint: () => void;
+  setPendingCircleNormal: (normal: Vector3 | null) => void;
   addDistanceMeasurement: (measurement: DistanceMeasurement) => void;
   removeDistanceMeasurement: (id: string) => void;
   addAreaMeasurement: (measurement: AreaMeasurement) => void;
   removeAreaMeasurement: (id: string) => void;
   addPolylineMeasurement: (measurement: PolylineMeasurement) => void;
   removePolylineMeasurement: (id: string) => void;
+  addCircleMeasurement: (measurement: CircleMeasurement) => void;
+  removeCircleMeasurement: (id: string) => void;
   setPendingAnnotation: (pending: PendingAnnotation | null) => void;
   setAnnotations: (annotations: Annotation[]) => void;
   addAnnotation: (annotation: Annotation) => void;
@@ -85,9 +103,11 @@ export const useViewerStore = create<ViewerState>((set) => ({
   modelId: null,
   activeTool: "none",
   pendingPoints: [],
+  pendingCircleNormal: null,
   distanceMeasurements: [],
   areaMeasurements: [],
   polylineMeasurements: [],
+  circleMeasurements: [],
   annotations: [],
   pendingAnnotation: null,
   selectedAnnotationId: null,
@@ -97,15 +117,17 @@ export const useViewerStore = create<ViewerState>((set) => ({
 
   setModelId: (modelId) => set({ modelId }),
 
-  setActiveTool: (tool) => set({ activeTool: tool, pendingPoints: [], pendingAnnotation: null }),
+  setActiveTool: (tool) => set({ activeTool: tool, pendingPoints: [], pendingCircleNormal: null, pendingAnnotation: null }),
 
   addPendingPoint: (point) =>
     set((state) => ({ pendingPoints: [...state.pendingPoints, point] })),
 
-  clearPendingPoints: () => set({ pendingPoints: [] }),
+  clearPendingPoints: () => set({ pendingPoints: [], pendingCircleNormal: null }),
 
   removeLastPendingPoint: () =>
     set((state) => ({ pendingPoints: state.pendingPoints.slice(0, -1) })),
+
+  setPendingCircleNormal: (normal) => set({ pendingCircleNormal: normal }),
 
   addDistanceMeasurement: (measurement) =>
     set((state) => ({
@@ -140,6 +162,18 @@ export const useViewerStore = create<ViewerState>((set) => ({
       polylineMeasurements: state.polylineMeasurements.filter((m) => m.id !== id),
     })),
 
+  addCircleMeasurement: (measurement) =>
+    set((state) => ({
+      circleMeasurements: [...state.circleMeasurements, measurement],
+      pendingPoints: [],
+      pendingCircleNormal: null,
+    })),
+
+  removeCircleMeasurement: (id) =>
+    set((state) => ({
+      circleMeasurements: state.circleMeasurements.filter((m) => m.id !== id),
+    })),
+
   setPendingAnnotation: (pending) => set({ pendingAnnotation: pending }),
 
   setAnnotations: (annotations) => set({ annotations }),
@@ -161,7 +195,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setSelectedAnnotationId: (id) => set({ selectedAnnotationId: id }),
 
   startEditingMeasurement: (m) =>
-    set({ editingMeasurement: m, activeTool: "none", pendingPoints: [], pendingAnnotation: null }),
+    set({ editingMeasurement: m, activeTool: "none", pendingPoints: [], pendingCircleNormal: null, pendingAnnotation: null }),
 
   cancelEditingMeasurement: () => set({ editingMeasurement: null, draggingIndex: null }),
 
@@ -183,6 +217,10 @@ export const useViewerStore = create<ViewerState>((set) => ({
         state.editingMeasurement?.type === "polyline"
           ? state.polylineMeasurements.map((m) => (m.id === id ? { ...m, points, length: value } : m))
           : state.polylineMeasurements,
+      circleMeasurements:
+        state.editingMeasurement?.type === "circle"
+          ? state.circleMeasurements.map((m) => (m.id === id ? { ...m, points, radius: value } : m))
+          : state.circleMeasurements,
     })),
 
   updateMeasurementMeta: (id, type, patch) =>
@@ -199,6 +237,10 @@ export const useViewerStore = create<ViewerState>((set) => ({
         type === "polyline"
           ? state.polylineMeasurements.map((m) => (m.id === id ? { ...m, ...patch } : m))
           : state.polylineMeasurements,
+      circleMeasurements:
+        type === "circle"
+          ? state.circleMeasurements.map((m) => (m.id === id ? { ...m, ...patch } : m))
+          : state.circleMeasurements,
     })),
 
   setLastCreatedMeasurementId: (id) => set({ lastCreatedMeasurementId: id }),
@@ -211,8 +253,17 @@ export const useViewerStore = create<ViewerState>((set) => ({
     set((state) => {
       if (state.draggingIndex === null) return {};
       if (state.editingMeasurement) {
+        const isCircleCenterDrag = state.editingMeasurement.type === "circle" && state.draggingIndex === 0;
         const points = state.editingMeasurement.points.slice();
-        points[state.draggingIndex] = point;
+        if (isCircleCenterDrag) {
+          const oldCenter = points[0];
+          const delta = point.clone().sub(oldCenter);
+          points[0] = point;
+          if (points[1]) points[1] = points[1].clone().add(delta);
+          if (points[2]) points[2] = points[2].clone().add(delta);
+        } else {
+          points[state.draggingIndex] = point;
+        }
         return { editingMeasurement: { ...state.editingMeasurement, points } };
       }
       const points = state.pendingPoints.slice();

@@ -11,6 +11,7 @@ export const theme = {
     distance: "#f5b942",
     area: "#38bdf8",
     polyline: "#d4d8dd",
+    circle: "#c084fc",
     danger: "#ef4444",
     severity: {
       baja: "#4ade80",

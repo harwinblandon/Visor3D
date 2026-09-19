@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Line, Html } from "@react-three/drei";
+import type { ThreeEvent } from "@react-three/fiber";
 import { Vector3, DoubleSide } from "three";
 import { computeNewellArea, triangulateForRender } from "../math/polygonArea";
 import { theme } from "../../styles/theme";
@@ -7,9 +8,11 @@ import { theme } from "../../styles/theme";
 interface AreaPolygonProps {
   points: Vector3[];
   area: number;
+  editable?: boolean;
+  onVertexDown?: (index: number) => void;
 }
 
-export function AreaPolygon({ points, area }: AreaPolygonProps) {
+export function AreaPolygon({ points, area, editable, onVertexDown }: AreaPolygonProps) {
   const geometry = useMemo(() => {
     const { normal } = computeNewellArea(points);
     return triangulateForRender(points, normal);
@@ -22,12 +25,25 @@ export function AreaPolygon({ points, area }: AreaPolygonProps) {
 
   const loopPoints = [...points, points[0]];
 
+  const handleDown = (index: number) => (event: ThreeEvent<PointerEvent>) => {
+    if (!editable) return;
+    event.stopPropagation();
+    onVertexDown?.(index);
+  };
+
   return (
     <group>
       <mesh geometry={geometry}>
         <meshBasicMaterial color={theme.color.area} transparent opacity={0.3} side={DoubleSide} depthWrite={false} />
       </mesh>
-      <Line points={loopPoints} color={theme.color.area} lineWidth={2} />
+      <Line points={loopPoints} color={theme.color.area} lineWidth={editable ? 3 : 2} />
+      {editable &&
+        points.map((p, i) => (
+          <mesh key={i} position={p} onPointerDown={handleDown(i)}>
+            <sphereGeometry args={[0.08, 12, 12]} />
+            <meshBasicMaterial color="#ffffff" />
+          </mesh>
+        ))}
       <Html position={centroid} center>
         <div
           style={{

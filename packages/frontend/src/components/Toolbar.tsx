@@ -134,10 +134,15 @@ export function Toolbar({
   const setActiveTool = useViewerStore((s) => s.setActiveTool);
   const pendingPoints = useViewerStore((s) => s.pendingPoints);
   const modelId = useViewerStore((s) => s.modelId);
+  const editingMeasurement = useViewerStore((s) => s.editingMeasurement);
+  const removeLastPendingPoint = useViewerStore((s) => s.removeLastPendingPoint);
 
   const isMeasuringArea = activeTool === "measure-area";
   const isVectorizing = activeTool === "vectorize-polyline";
+  const isMeasuringDistance = activeTool === "measure-distance";
   const activeToolColor = activeTool !== "none" ? TOOL_COLORS[activeTool] : undefined;
+  const canUndoPoint =
+    (isMeasuringDistance || isMeasuringArea || isVectorizing) && pendingPoints.length > 0;
 
   const toolStatus =
     activeTool === "measure-distance" && pendingPoints.length === 1
@@ -176,46 +181,71 @@ export function Toolbar({
       </div>
 
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <Dropdown
-          accentColor={activeToolColor}
-          label={
-            <>
-              {activeTool !== "none" && (
-                <span
-                  style={{ width: 8, height: 8, borderRadius: "50%", background: activeToolColor, display: "inline-block" }}
-                />
-              )}
-              Herramientas{toolStatus ? `: ${toolStatus}` : ""}
-            </>
-          }
-        >
-          {(Object.keys(TOOL_LABELS) as ActiveTool[])
-            .filter((t) => t !== "none")
-            .map((t) => (
-              <DropdownItem
-                key={t}
-                active={activeTool === t}
-                color={TOOL_COLORS[t]}
-                onClick={() => setActiveTool(activeTool === t ? "none" : t)}
-              >
-                {TOOL_LABELS[t]}
+        {editingMeasurement ? (
+          <div
+            style={{
+              padding: "8px 16px",
+              borderRadius: theme.radius,
+              border: `1px solid ${theme.color.accent}`,
+              color: theme.color.accent,
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: theme.font,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Editando vértices — guarda o cancela en la lista de mediciones
+          </div>
+        ) : (
+          <>
+            <Dropdown
+              accentColor={activeToolColor}
+              label={
+                <>
+                  {activeTool !== "none" && (
+                    <span
+                      style={{ width: 8, height: 8, borderRadius: "50%", background: activeToolColor, display: "inline-block" }}
+                    />
+                  )}
+                  Herramientas{toolStatus ? `: ${toolStatus}` : ""}
+                </>
+              }
+            >
+              {(Object.keys(TOOL_LABELS) as ActiveTool[])
+                .filter((t) => t !== "none")
+                .map((t) => (
+                  <DropdownItem
+                    key={t}
+                    active={activeTool === t}
+                    color={TOOL_COLORS[t]}
+                    onClick={() => setActiveTool(activeTool === t ? "none" : t)}
+                  >
+                    {TOOL_LABELS[t]}
+                  </DropdownItem>
+                ))}
+              <DropdownDivider />
+              <DropdownItem active={activeTool === "none"} onClick={() => setActiveTool("none")}>
+                Ninguna herramienta
               </DropdownItem>
-            ))}
-          <DropdownDivider />
-          <DropdownItem active={activeTool === "none"} onClick={() => setActiveTool("none")}>
-            Ninguna herramienta
-          </DropdownItem>
-        </Dropdown>
+            </Dropdown>
 
-        {isMeasuringArea && pendingPoints.length >= 3 && (
-          <FinishButton color={theme.color.area} onClick={() => finalizeAreaPolygon()}>
-            Cerrar polígono
-          </FinishButton>
-        )}
-        {isVectorizing && pendingPoints.length >= 2 && (
-          <FinishButton color={theme.color.polyline} onClick={() => finalizePolyline()}>
-            Finalizar polilínea
-          </FinishButton>
+            {canUndoPoint && (
+              <FinishButton color={theme.color.textMuted} onClick={() => removeLastPendingPoint()}>
+                ↩ Deshacer último punto
+              </FinishButton>
+            )}
+
+            {isMeasuringArea && pendingPoints.length >= 3 && (
+              <FinishButton color={theme.color.area} onClick={() => finalizeAreaPolygon()}>
+                Cerrar polígono
+              </FinishButton>
+            )}
+            {isVectorizing && pendingPoints.length >= 2 && (
+              <FinishButton color={theme.color.polyline} onClick={() => finalizePolyline()}>
+                Finalizar polilínea
+              </FinishButton>
+            )}
+          </>
         )}
 
         <Dropdown label="Ver">

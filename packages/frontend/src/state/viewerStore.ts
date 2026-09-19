@@ -27,6 +27,14 @@ export interface PolylineMeasurement {
   length: number;
 }
 
+export type EditingMeasurementType = "distance" | "area" | "polyline";
+
+export interface EditingMeasurement {
+  id: string;
+  type: EditingMeasurementType;
+  points: Vector3[];
+}
+
 interface ViewerState {
   modelId: string | null;
   activeTool: ActiveTool;
@@ -37,10 +45,13 @@ interface ViewerState {
   annotations: Annotation[];
   pendingAnnotation: PendingAnnotation | null;
   selectedAnnotationId: string | null;
+  editingMeasurement: EditingMeasurement | null;
+  draggingIndex: number | null;
   setModelId: (modelId: string | null) => void;
   setActiveTool: (tool: ActiveTool) => void;
   addPendingPoint: (point: Vector3) => void;
   clearPendingPoints: () => void;
+  removeLastPendingPoint: () => void;
   addDistanceMeasurement: (measurement: DistanceMeasurement) => void;
   removeDistanceMeasurement: (id: string) => void;
   addAreaMeasurement: (measurement: AreaMeasurement) => void;
@@ -53,6 +64,12 @@ interface ViewerState {
   updateAnnotationLocal: (id: string, patch: Partial<Annotation>) => void;
   removeAnnotation: (id: string) => void;
   setSelectedAnnotationId: (id: string | null) => void;
+  startEditingMeasurement: (m: EditingMeasurement) => void;
+  cancelEditingMeasurement: () => void;
+  applyEditedMeasurement: (id: string, points: Vector3[], value: number) => void;
+  startDrag: (index: number) => void;
+  endDrag: () => void;
+  updateDragPoint: (point: Vector3) => void;
 }
 
 export const useViewerStore = create<ViewerState>((set) => ({
@@ -65,6 +82,8 @@ export const useViewerStore = create<ViewerState>((set) => ({
   annotations: [],
   pendingAnnotation: null,
   selectedAnnotationId: null,
+  editingMeasurement: null,
+  draggingIndex: null,
 
   setModelId: (modelId) => set({ modelId }),
 
@@ -74,6 +93,9 @@ export const useViewerStore = create<ViewerState>((set) => ({
     set((state) => ({ pendingPoints: [...state.pendingPoints, point] })),
 
   clearPendingPoints: () => set({ pendingPoints: [] }),
+
+  removeLastPendingPoint: () =>
+    set((state) => ({ pendingPoints: state.pendingPoints.slice(0, -1) })),
 
   addDistanceMeasurement: (measurement) =>
     set((state) => ({
@@ -127,4 +149,46 @@ export const useViewerStore = create<ViewerState>((set) => ({
     })),
 
   setSelectedAnnotationId: (id) => set({ selectedAnnotationId: id }),
+
+  startEditingMeasurement: (m) =>
+    set({ editingMeasurement: m, activeTool: "none", pendingPoints: [], pendingAnnotation: null }),
+
+  cancelEditingMeasurement: () => set({ editingMeasurement: null, draggingIndex: null }),
+
+  applyEditedMeasurement: (id, points, value) =>
+    set((state) => ({
+      editingMeasurement: null,
+      draggingIndex: null,
+      distanceMeasurements:
+        state.editingMeasurement?.type === "distance"
+          ? state.distanceMeasurements.map((m) =>
+              m.id === id ? { ...m, points: [points[0], points[1]] as [Vector3, Vector3], distance: value } : m,
+            )
+          : state.distanceMeasurements,
+      areaMeasurements:
+        state.editingMeasurement?.type === "area"
+          ? state.areaMeasurements.map((m) => (m.id === id ? { ...m, points, area: value } : m))
+          : state.areaMeasurements,
+      polylineMeasurements:
+        state.editingMeasurement?.type === "polyline"
+          ? state.polylineMeasurements.map((m) => (m.id === id ? { ...m, points, length: value } : m))
+          : state.polylineMeasurements,
+    })),
+
+  startDrag: (index) => set({ draggingIndex: index }),
+
+  endDrag: () => set({ draggingIndex: null }),
+
+  updateDragPoint: (point) =>
+    set((state) => {
+      if (state.draggingIndex === null) return {};
+      if (state.editingMeasurement) {
+        const points = state.editingMeasurement.points.slice();
+        points[state.draggingIndex] = point;
+        return { editingMeasurement: { ...state.editingMeasurement, points } };
+      }
+      const points = state.pendingPoints.slice();
+      points[state.draggingIndex] = point;
+      return { pendingPoints: points };
+    }),
 }));

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import type { ThreeEvent } from "@react-three/fiber";
 import { useViewerStore } from "../../state/viewerStore";
 import { computeDistance } from "../math/distance";
 import { DistanceLine } from "../overlays/DistanceLine";
@@ -10,6 +11,8 @@ export function MeasureDistanceTool() {
   const distanceMeasurements = useViewerStore((s) => s.distanceMeasurements);
   const addDistanceMeasurement = useViewerStore((s) => s.addDistanceMeasurement);
   const modelId = useViewerStore((s) => s.modelId);
+  const editingMeasurement = useViewerStore((s) => s.editingMeasurement);
+  const startDrag = useViewerStore((s) => s.startDrag);
 
   useEffect(() => {
     if (activeTool !== "measure-distance") return;
@@ -42,13 +45,31 @@ export function MeasureDistanceTool() {
     }
   }, [activeTool, pendingPoints, addDistanceMeasurement, modelId]);
 
+  const isEditingThis = (id: string) => editingMeasurement?.type === "distance" && editingMeasurement.id === id;
+
+  const handlePendingVertexDown = (event: ThreeEvent<PointerEvent>) => {
+    event.stopPropagation();
+    startDrag(0);
+  };
+
   return (
     <group>
-      {distanceMeasurements.map((m) => (
-        <DistanceLine key={m.id} a={m.points[0]} b={m.points[1]} distance={m.distance} />
-      ))}
+      {distanceMeasurements.map((m) =>
+        isEditingThis(m.id) && editingMeasurement ? (
+          <DistanceLine
+            key={m.id}
+            a={editingMeasurement.points[0]}
+            b={editingMeasurement.points[1]}
+            distance={computeDistance(editingMeasurement.points[0], editingMeasurement.points[1])}
+            editable
+            onVertexDown={startDrag}
+          />
+        ) : (
+          <DistanceLine key={m.id} a={m.points[0]} b={m.points[1]} distance={m.distance} />
+        ),
+      )}
       {activeTool === "measure-distance" && pendingPoints.length === 1 && (
-        <mesh position={pendingPoints[0]}>
+        <mesh position={pendingPoints[0]} onPointerDown={handlePendingVertexDown}>
           <sphereGeometry args={[0.05, 12, 12]} />
           <meshBasicMaterial color="#ffcc00" />
         </mesh>

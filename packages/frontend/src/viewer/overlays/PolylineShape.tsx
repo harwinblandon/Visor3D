@@ -1,22 +1,31 @@
 import { Line, Html } from "@react-three/drei";
+import type { ThreeEvent } from "@react-three/fiber";
 import { Vector3 } from "three";
 import { theme } from "../../styles/theme";
 
 interface PolylineShapeProps {
   points: Vector3[];
   length: number;
+  editable?: boolean;
+  onVertexDown?: (index: number) => void;
 }
 
-export function PolylineShape({ points, length }: PolylineShapeProps) {
+export function PolylineShape({ points, length, editable, onVertexDown }: PolylineShapeProps) {
   const mid = points[Math.floor(points.length / 2)];
+
+  const handleDown = (index: number) => (event: ThreeEvent<PointerEvent>) => {
+    if (!editable) return;
+    event.stopPropagation();
+    onVertexDown?.(index);
+  };
 
   return (
     <group>
-      <Line points={points} color={theme.color.polyline} lineWidth={2} />
+      <Line points={points} color={theme.color.polyline} lineWidth={editable ? 3 : 2} />
       {points.map((p, i) => (
-        <mesh key={i} position={p}>
-          <sphereGeometry args={[0.04, 10, 10]} />
-          <meshBasicMaterial color={theme.color.polyline} />
+        <mesh key={i} position={p} onPointerDown={handleDown(i)}>
+          <sphereGeometry args={[editable ? 0.07 : 0.04, 10, 10]} />
+          <meshBasicMaterial color={editable ? "#ffffff" : theme.color.polyline} />
         </mesh>
       ))}
       <Html position={mid} center>

@@ -21,6 +21,14 @@ export function listMeasurements(modelId: string): Promise<Measurement[]> {
   return apiFetch<Measurement[]>(`/api/measurements?modelId=${encodeURIComponent(modelId)}`);
 }
 
+export function updateMeasurement(id: string, points: Point3D[], value: number): Promise<Measurement> {
+  return apiFetch<Measurement>(`/api/measurements/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ points, value }),
+  });
+}
+
 export function deleteMeasurement(id: string): Promise<void> {
   return apiFetch<void>(`/api/measurements/${id}`, { method: "DELETE" });
 }

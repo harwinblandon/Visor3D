@@ -3,6 +3,7 @@ import { useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { Vector3, type PerspectiveCamera } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import { useViewerStore } from "../state/viewerStore";
 
 interface CameraRigProps {
   target: { center: Vector3; size: Vector3 } | null;
@@ -11,6 +12,7 @@ interface CameraRigProps {
 export function CameraRig({ target }: CameraRigProps) {
   const { camera } = useThree();
   const controlsRef = useRef<OrbitControlsImpl>(null);
+  const isDragging = useViewerStore((s) => s.draggingIndex !== null);
 
   useEffect(() => {
     if (!target || !controlsRef.current) return;
@@ -33,5 +35,5 @@ export function CameraRig({ target }: CameraRigProps) {
     controlsRef.current.update();
   }, [target, camera]);
 
-  return <OrbitControls ref={controlsRef} makeDefault enableDamping />;
+  return <OrbitControls ref={controlsRef} makeDefault enableDamping enabled={!isDragging} />;
 }

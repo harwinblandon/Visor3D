@@ -47,6 +47,20 @@ export function Viewer3D({
   const setModelId = useViewerStore((s) => s.setModelId);
   const setPendingAnnotation = useViewerStore((s) => s.setPendingAnnotation);
   const setAnnotations = useViewerStore((s) => s.setAnnotations);
+  const draggingIndex = useViewerStore((s) => s.draggingIndex);
+  const updateDragPoint = useViewerStore((s) => s.updateDragPoint);
+  const endDrag = useViewerStore((s) => s.endDrag);
+
+  useEffect(() => {
+    if (draggingIndex === null) return;
+    const handlePointerUp = () => endDrag();
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
+    };
+  }, [draggingIndex, endDrag]);
 
   useEffect(() => {
     setModelId(model.id);
@@ -105,6 +119,10 @@ export function Viewer3D({
     }
   };
 
+  const handleSurfacePointerMove = (point: Vector3) => {
+    updateDragPoint(point.clone());
+  };
+
   const floorY = bounds ? bounds.center.y - bounds.size.y / 2 : 0;
   const gridSize = bounds ? Math.max(bounds.size.x, bounds.size.z) * 1.6 : 100;
 
@@ -143,6 +161,7 @@ export function Viewer3D({
             onLoaded={setBounds}
             onSurfaceClick={handleSurfaceClick}
             onSurfaceDoubleClick={handleSurfaceDoubleClick}
+            onSurfacePointerMove={draggingIndex !== null ? handleSurfacePointerMove : undefined}
           />
         </Suspense>
         {bounds && (

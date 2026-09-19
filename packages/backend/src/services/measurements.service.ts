@@ -67,6 +67,18 @@ export async function listMeasurements(modelId: string): Promise<Measurement[]> 
   return rows.map(mapRow);
 }
 
+export async function updateMeasurement(
+  id: string,
+  points: Point3D[],
+  value: number,
+): Promise<Measurement | null> {
+  const { rows } = await pool.query<MeasurementRow>(
+    "UPDATE measurements SET points = $2, value = $3 WHERE id = $1 RETURNING *",
+    [id, JSON.stringify(points), value],
+  );
+  return rows[0] ? mapRow(rows[0]) : null;
+}
+
 export async function deleteMeasurement(id: string): Promise<boolean> {
   const { rowCount } = await pool.query("DELETE FROM measurements WHERE id = $1", [id]);
   return (rowCount ?? 0) > 0;

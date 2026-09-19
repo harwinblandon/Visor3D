@@ -1,4 +1,5 @@
 import { Line } from "@react-three/drei";
+import type { ThreeEvent } from "@react-three/fiber";
 import { useViewerStore } from "../../state/viewerStore";
 import { computeNewellArea } from "../math/polygonArea";
 import { AreaPolygon } from "../overlays/AreaPolygon";
@@ -35,20 +36,38 @@ export function MeasureAreaTool() {
   const activeTool = useViewerStore((s) => s.activeTool);
   const pendingPoints = useViewerStore((s) => s.pendingPoints);
   const areaMeasurements = useViewerStore((s) => s.areaMeasurements);
+  const editingMeasurement = useViewerStore((s) => s.editingMeasurement);
+  const startDrag = useViewerStore((s) => s.startDrag);
 
   const showPreview = activeTool === "measure-area" && pendingPoints.length > 0;
+  const isEditingThis = (id: string) => editingMeasurement?.type === "area" && editingMeasurement.id === id;
+
+  const handlePendingVertexDown = (index: number) => (event: ThreeEvent<PointerEvent>) => {
+    event.stopPropagation();
+    startDrag(index);
+  };
 
   return (
     <group>
-      {areaMeasurements.map((m) => (
-        <AreaPolygon key={m.id} points={m.points} area={m.area} />
-      ))}
+      {areaMeasurements.map((m) =>
+        isEditingThis(m.id) && editingMeasurement ? (
+          <AreaPolygon
+            key={m.id}
+            points={editingMeasurement.points}
+            area={computeNewellArea(editingMeasurement.points).area}
+            editable
+            onVertexDown={startDrag}
+          />
+        ) : (
+          <AreaPolygon key={m.id} points={m.points} area={m.area} />
+        ),
+      )}
 
       {showPreview && (
         <>
           {pendingPoints.length > 1 && <Line points={pendingPoints} color="#00aaff" lineWidth={2} />}
           {pendingPoints.map((p, i) => (
-            <mesh key={i} position={p}>
+            <mesh key={i} position={p} onPointerDown={handlePendingVertexDown(i)}>
               <sphereGeometry args={[0.05, 12, 12]} />
               <meshBasicMaterial color="#00aaff" />
             </mesh>

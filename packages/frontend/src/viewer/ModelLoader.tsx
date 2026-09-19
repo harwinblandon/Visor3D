@@ -8,9 +8,16 @@ interface ModelLoaderProps {
   onLoaded?: (bounds: { center: Vector3; size: Vector3 }) => void;
   onSurfaceClick?: (point: Vector3, normal: Vector3 | null) => void;
   onSurfaceDoubleClick?: () => void;
+  onSurfacePointerMove?: (point: Vector3) => void;
 }
 
-export function ModelLoader({ url, onLoaded, onSurfaceClick, onSurfaceDoubleClick }: ModelLoaderProps) {
+export function ModelLoader({
+  url,
+  onLoaded,
+  onSurfaceClick,
+  onSurfaceDoubleClick,
+  onSurfacePointerMove,
+}: ModelLoaderProps) {
   const { scene } = useGLTF(url, "/draco/");
   const groupRef = useRef<Group>(null);
 
@@ -35,12 +42,19 @@ export function ModelLoader({ url, onLoaded, onSurfaceClick, onSurfaceDoubleClic
     onSurfaceDoubleClick?.();
   };
 
+  const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
+    if (!onSurfacePointerMove) return;
+    event.stopPropagation();
+    onSurfacePointerMove(event.point);
+  };
+
   return (
     <primitive
       ref={groupRef}
       object={scene}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
+      onPointerMove={onSurfacePointerMove ? handlePointerMove : undefined}
     />
   );
 }

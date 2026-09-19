@@ -1,4 +1,5 @@
 import { Line } from "@react-three/drei";
+import type { ThreeEvent } from "@react-three/fiber";
 import { useViewerStore } from "../../state/viewerStore";
 import { computePolylineLength } from "../math/distance";
 import { PolylineShape } from "../overlays/PolylineShape";
@@ -38,20 +39,38 @@ export function PolylineTool() {
   const activeTool = useViewerStore((s) => s.activeTool);
   const pendingPoints = useViewerStore((s) => s.pendingPoints);
   const polylineMeasurements = useViewerStore((s) => s.polylineMeasurements);
+  const editingMeasurement = useViewerStore((s) => s.editingMeasurement);
+  const startDrag = useViewerStore((s) => s.startDrag);
 
   const showPreview = activeTool === "vectorize-polyline" && pendingPoints.length > 0;
+  const isEditingThis = (id: string) => editingMeasurement?.type === "polyline" && editingMeasurement.id === id;
+
+  const handlePendingVertexDown = (index: number) => (event: ThreeEvent<PointerEvent>) => {
+    event.stopPropagation();
+    startDrag(index);
+  };
 
   return (
     <group>
-      {polylineMeasurements.map((m) => (
-        <PolylineShape key={m.id} points={m.points} length={m.length} />
-      ))}
+      {polylineMeasurements.map((m) =>
+        isEditingThis(m.id) && editingMeasurement ? (
+          <PolylineShape
+            key={m.id}
+            points={editingMeasurement.points}
+            length={computePolylineLength(editingMeasurement.points)}
+            editable
+            onVertexDown={startDrag}
+          />
+        ) : (
+          <PolylineShape key={m.id} points={m.points} length={m.length} />
+        ),
+      )}
 
       {showPreview && (
         <>
           {pendingPoints.length > 1 && <Line points={pendingPoints} color={theme.color.polyline} lineWidth={2} />}
           {pendingPoints.map((p, i) => (
-            <mesh key={i} position={p}>
+            <mesh key={i} position={p} onPointerDown={handlePendingVertexDown(i)}>
               <sphereGeometry args={[0.04, 10, 10]} />
               <meshBasicMaterial color={theme.color.polyline} />
             </mesh>

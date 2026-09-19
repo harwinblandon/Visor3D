@@ -1,4 +1,5 @@
 import { Line, Html } from "@react-three/drei";
+import type { ThreeEvent } from "@react-three/fiber";
 import { Vector3 } from "three";
 import { theme } from "../../styles/theme";
 
@@ -6,21 +7,30 @@ interface DistanceLineProps {
   a: Vector3;
   b: Vector3;
   distance: number;
+  editable?: boolean;
+  onVertexDown?: (index: number) => void;
 }
 
-export function DistanceLine({ a, b, distance }: DistanceLineProps) {
+export function DistanceLine({ a, b, distance, editable, onVertexDown }: DistanceLineProps) {
   const midpoint = a.clone().add(b).multiplyScalar(0.5);
+  const radius = Math.max(distance * 0.01, 0.02) * (editable ? 1.8 : 1);
+
+  const handleDown = (index: number) => (event: ThreeEvent<PointerEvent>) => {
+    if (!editable) return;
+    event.stopPropagation();
+    onVertexDown?.(index);
+  };
 
   return (
     <group>
-      <Line points={[a, b]} color={theme.color.distance} lineWidth={2} />
-      <mesh position={a}>
-        <sphereGeometry args={[Math.max(distance * 0.01, 0.02), 12, 12]} />
-        <meshBasicMaterial color={theme.color.distance} />
+      <Line points={[a, b]} color={theme.color.distance} lineWidth={editable ? 3 : 2} />
+      <mesh position={a} onPointerDown={handleDown(0)}>
+        <sphereGeometry args={[radius, 12, 12]} />
+        <meshBasicMaterial color={editable ? "#ffffff" : theme.color.distance} />
       </mesh>
-      <mesh position={b}>
-        <sphereGeometry args={[Math.max(distance * 0.01, 0.02), 12, 12]} />
-        <meshBasicMaterial color={theme.color.distance} />
+      <mesh position={b} onPointerDown={handleDown(1)}>
+        <sphereGeometry args={[radius, 12, 12]} />
+        <meshBasicMaterial color={editable ? "#ffffff" : theme.color.distance} />
       </mesh>
       <Html position={midpoint} center>
         <div

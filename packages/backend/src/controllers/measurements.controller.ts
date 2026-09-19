@@ -35,6 +35,20 @@ export async function listMeasurements(req: Request, res: Response, next: NextFu
   }
 }
 
+export async function updateMeasurement(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { points, value } = req.body;
+    if (!points || value === undefined) {
+      return res.status(400).json({ error: "Faltan campos requeridos (points, value)" });
+    }
+    const measurement = await measurementsService.updateMeasurement(req.params.id, points, value);
+    if (!measurement) return res.status(404).json({ error: "Medición no encontrada" });
+    res.json(measurement);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function deleteMeasurement(req: Request, res: Response, next: NextFunction) {
   try {
     const deleted = await measurementsService.deleteMeasurement(req.params.id);

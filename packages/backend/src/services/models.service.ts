@@ -12,6 +12,7 @@ interface ModelRow {
   latitude: number | null;
   longitude: number | null;
   is_active: boolean;
+  is_published: boolean;
   notes: string | null;
   uploaded_at: string;
 }
@@ -28,6 +29,7 @@ function mapRow(row: ModelRow): Model {
     latitude: row.latitude,
     longitude: row.longitude,
     isActive: row.is_active,
+    isPublished: row.is_published,
     notes: row.notes,
     uploadedAt: row.uploaded_at,
   };
@@ -108,6 +110,14 @@ export async function setActiveModel(id: string): Promise<Model | null> {
   } finally {
     client.release();
   }
+}
+
+export async function setPublished(id: string, isPublished: boolean): Promise<Model | null> {
+  const { rows } = await pool.query<ModelRow>(
+    "UPDATE models SET is_published = $2 WHERE id = $1 RETURNING *",
+    [id, isPublished],
+  );
+  return rows[0] ? mapRow(rows[0]) : null;
 }
 
 export interface DeletedModelFiles {

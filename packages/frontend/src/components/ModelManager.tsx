@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Model } from "@visor3d/shared";
-import { listModels, activateModel, deleteModel } from "../api/models";
+import { listModels, activateModel, deleteModel, setModelPublished, modelShareUrl } from "../api/models";
 import { theme } from "../styles/theme";
 
 interface ModelManagerProps {
@@ -19,11 +19,23 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" });
 }
 
+const actionButtonStyle: React.CSSProperties = {
+  padding: "6px 10px",
+  borderRadius: 6,
+  border: `1px solid ${theme.color.border}`,
+  background: "transparent",
+  color: theme.color.textMuted,
+  cursor: "pointer",
+  fontSize: 11,
+  fontWeight: 600,
+};
+
 export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManagerProps) {
   const [models, setModels] = useState<Model[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const reload = () => {
     listModels()
@@ -43,6 +55,29 @@ export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManager
       setError(err instanceof Error ? err.message : "Error al activar el modelo");
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const handleTogglePublished = async (m: Model) => {
+    setBusyId(m.id);
+    setError(null);
+    try {
+      await setModelPublished(m.id, !m.isPublished);
+      reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al cambiar la visibilidad");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleCopyLink = async (m: Model) => {
+    try {
+      await navigator.clipboard.writeText(modelShareUrl(m));
+      setCopiedId(m.id);
+      setTimeout(() => setCopiedId((v) => (v === m.id ? null : v)), 2000);
+    } catch {
+      setError("No se pudo copiar el enlace. Cópialo manualmente: " + modelShareUrl(m));
     }
   };
 
@@ -82,7 +117,7 @@ export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManager
           borderRadius: 12,
           background: theme.color.panel,
           border: `1px solid ${theme.color.border}`,
-          width: 520,
+          width: 580,
           maxHeight: "80vh",
           boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
         }}
@@ -100,6 +135,11 @@ export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManager
           </button>
         </div>
 
+        <p style={{ color: theme.color.textMuted, fontSize: 11, margin: 0 }}>
+          "Publicado" controla si alguien con el enlace puede verlo. "Activo" es el que se muestra por
+          defecto al entrar sin un enlace específico.
+        </p>
+
         {error && <p style={{ color: theme.color.danger, fontSize: 12, margin: 0 }}>{error}</p>}
 
         <div style={{ overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
@@ -111,17 +151,16 @@ export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManager
               key={m.id}
               style={{
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                flexDirection: "column",
+                gap: 8,
                 padding: "10px 12px",
                 borderRadius: theme.radius,
                 background: theme.color.panelAlt,
                 border: `1px solid ${m.isActive ? theme.color.accent : theme.color.border}`,
-                gap: 10,
               }}
             >
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   <span style={{ color: theme.color.text, fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {m.name}
                   </span>
@@ -130,28 +169,44 @@ export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManager
                       ACTIVO
                     </span>
                   )}
+                  <span
+                    style={{
+                      color: m.isPublished ? theme.color.severity.baja : theme.color.severity.alta,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      border: `1px solid ${m.isPublished ? theme.color.severity.baja : theme.color.severity.alta}`,
+                      borderRadius: 4,
+                      padding: "1px 5px",
+                    }}
+                  >
+                    {m.isPublished ? "PUBLICADO" : "OCULTO"}
+                  </span>
                 </div>
                 <div style={{ color: theme.color.textMuted, fontSize: 11, marginTop: 2 }}>
                   {formatDate(m.uploadedAt)} · {formatSize(m.fileSizeBytes)}
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <button type="button" onClick={() => handleCopyLink(m)} style={{ ...actionButtonStyle, color: theme.color.accent, borderColor: theme.color.accent }}>
+                  {copiedId === m.id ? "¡Copiado!" : "Copiar enlace"}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={busyId === m.id}
+                  onClick={() => handleTogglePublished(m)}
+                  style={actionButtonStyle}
+                >
+                  {m.isPublished ? "Ocultar" : "Publicar"}
+                </button>
+
                 {!m.isActive && (
                   <button
                     type="button"
                     disabled={busyId === m.id}
                     onClick={() => handleActivate(m.id)}
-                    style={{
-                      padding: "6px 10px",
-                      borderRadius: 6,
-                      border: `1px solid ${theme.color.accent}`,
-                      background: "transparent",
-                      color: theme.color.accent,
-                      cursor: "pointer",
-                      fontSize: 11,
-                      fontWeight: 600,
-                    }}
+                    style={{ ...actionButtonStyle, color: theme.color.accent, borderColor: theme.color.accent }}
                   >
                     Trabajar en este
                   </button>
@@ -167,11 +222,7 @@ export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManager
                     >
                       Confirmar borrado
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDeleteId(null)}
-                      style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${theme.color.border}`, background: "transparent", color: theme.color.textMuted, cursor: "pointer", fontSize: 11 }}
-                    >
+                    <button type="button" onClick={() => setConfirmDeleteId(null)} style={actionButtonStyle}>
                       Cancelar
                     </button>
                   </>
@@ -179,7 +230,7 @@ export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManager
                   <button
                     type="button"
                     onClick={() => setConfirmDeleteId(m.id)}
-                    style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${theme.color.border}`, background: "transparent", color: theme.color.textMuted, cursor: "pointer", fontSize: 11 }}
+                    style={actionButtonStyle}
                     onMouseEnter={(e) => (e.currentTarget.style.color = theme.color.danger)}
                     onMouseLeave={(e) => (e.currentTarget.style.color = theme.color.textMuted)}
                   >

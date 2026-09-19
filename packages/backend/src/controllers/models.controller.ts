@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { unlink } from "node:fs/promises";
 import type { Request, Response, NextFunction } from "express";
 import * as modelsService from "../services/models.service.js";
+import { isValidAdminKey } from "../middleware/auth.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, "..", "..", "uploads");
@@ -52,10 +53,13 @@ export async function listModels(_req: Request, res: Response, next: NextFunctio
   }
 }
 
-export async function getActiveModel(_req: Request, res: Response, next: NextFunction) {
+export async function getActiveModel(req: Request, res: Response, next: NextFunction) {
   try {
     const model = await modelsService.getActiveModel();
     if (!model) return res.status(404).json({ error: "No hay ningún modelo activo" });
+    if (!model.isPublished && !isValidAdminKey(req.header("x-admin-key"))) {
+      return res.status(404).json({ error: "No hay ningún modelo activo" });
+    }
     res.json(model);
   } catch (err) {
     next(err);
@@ -66,6 +70,9 @@ export async function getModelById(req: Request, res: Response, next: NextFuncti
   try {
     const model = await modelsService.getModelById(req.params.id);
     if (!model) return res.status(404).json({ error: "Modelo no encontrado" });
+    if (!model.isPublished && !isValidAdminKey(req.header("x-admin-key"))) {
+      return res.status(404).json({ error: "Modelo no encontrado" });
+    }
     res.json(model);
   } catch (err) {
     next(err);
@@ -75,6 +82,20 @@ export async function getModelById(req: Request, res: Response, next: NextFuncti
 export async function activateModel(req: Request, res: Response, next: NextFunction) {
   try {
     const model = await modelsService.setActiveModel(req.params.id);
+    if (!model) return res.status(404).json({ error: "Modelo no encontrado" });
+    res.json(model);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function setPublished(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { isPublished } = req.body;
+    if (typeof isPublished !== "boolean") {
+      return res.status(400).json({ error: "Falta el campo booleano 'isPublished'" });
+    }
+    const model = await modelsService.setPublished(req.params.id, isPublished);
     if (!model) return res.status(404).json({ error: "Modelo no encontrado" });
     res.json(model);
   } catch (err) {

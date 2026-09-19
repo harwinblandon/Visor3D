@@ -15,6 +15,7 @@ export interface Model {
   latitude: number | null;
   longitude: number | null;
   isActive: boolean;
+  isPublished: boolean;
   notes: string | null;
   uploadedAt: string;
 }

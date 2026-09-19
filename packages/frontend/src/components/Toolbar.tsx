@@ -56,7 +56,7 @@ interface ToolbarProps {
   onLock: () => void;
 }
 
-function AdminUnlockMenu({ onUnlock }: { onUnlock: (password: string) => Promise<boolean> }) {
+export function AdminUnlockMenu({ onUnlock }: { onUnlock: (password: string) => Promise<boolean> }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);

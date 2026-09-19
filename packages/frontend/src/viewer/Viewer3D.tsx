@@ -17,6 +17,7 @@ import { AnnotationForm } from "../components/AnnotationForm";
 import { AnnotationDetail } from "../components/AnnotationDetail";
 import { LocationMap } from "../components/LocationMap";
 import { TourManager } from "../components/TourManager";
+import { TourPlayerBar } from "../components/TourPlayerBar";
 import { useViewerStore } from "../state/viewerStore";
 import { modelFileUrl } from "../api/models";
 import { listMeasurements } from "../api/measurements";
@@ -47,11 +48,7 @@ export function Viewer3D({
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [isTourManagerOpen, setIsTourManagerOpen] = useState(false);
   const hasLocation = model.latitude !== null && model.longitude !== null;
-  const tourStops = useViewerStore((s) => s.tourStops);
   const setTourStops = useViewerStore((s) => s.setTourStops);
-  const isTouring = useViewerStore((s) => s.isTouring);
-  const startTour = useViewerStore((s) => s.startTour);
-  const stopTour = useViewerStore((s) => s.stopTour);
   const activeTool = useViewerStore((s) => s.activeTool);
   const pendingPoints = useViewerStore((s) => s.pendingPoints);
   const addPendingPoint = useViewerStore((s) => s.addPendingPoint);
@@ -177,8 +174,6 @@ export function Viewer3D({
         isAdmin={isAdmin}
         onUnlock={onUnlock}
         onLock={onLock}
-        hasTour={tourStops.length > 0}
-        onStartTour={startTour}
         onOpenTourManager={() => setIsTourManagerOpen(true)}
       />
       <MeasurementList />
@@ -194,31 +189,7 @@ export function Viewer3D({
         />
       )}
       {isTourManagerOpen && <TourManager onClose={() => setIsTourManagerOpen(false)} />}
-      {isTouring && (
-        <button
-          type="button"
-          onClick={stopTour}
-          style={{
-            position: "fixed",
-            bottom: 24,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 25,
-            padding: "10px 20px",
-            borderRadius: theme.radius,
-            border: "none",
-            background: theme.color.danger,
-            color: "#fff",
-            cursor: "pointer",
-            fontSize: 13,
-            fontWeight: 600,
-            fontFamily: theme.font,
-            boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
-          }}
-        >
-          ⏹ Detener recorrido
-        </button>
-      )}
+      <TourPlayerBar />
       <Canvas camera={{ fov: 50 }}>
         <color attach="background" args={[theme.color.bgCanvas]} />
         <ambientLight intensity={0.6} />

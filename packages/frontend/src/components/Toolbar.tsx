@@ -56,8 +56,6 @@ interface ToolbarProps {
   isAdmin: boolean;
   onUnlock: (password: string) => Promise<boolean>;
   onLock: () => void;
-  hasTour: boolean;
-  onStartTour: () => void;
   onOpenTourManager: () => void;
 }
 
@@ -134,8 +132,6 @@ export function Toolbar({
   isAdmin,
   onUnlock,
   onLock,
-  hasTour,
-  onStartTour,
   onOpenTourManager,
 }: ToolbarProps) {
   const activeTool = useViewerStore((s) => s.activeTool);
@@ -264,7 +260,6 @@ export function Toolbar({
             <DropdownItem onClick={onToggleLocation}>Ubicación</DropdownItem>
           )}
           <DropdownItem onClick={onOpenDashboard}>Dashboard</DropdownItem>
-          {hasTour && <DropdownItem onClick={onStartTour}>▶ Iniciar recorrido</DropdownItem>}
           {isAdmin && (
             <>
               <DropdownDivider />

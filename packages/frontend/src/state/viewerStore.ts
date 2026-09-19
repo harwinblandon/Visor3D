@@ -48,6 +48,11 @@ export interface CircleMeasurement extends MeasurementMeta {
 
 export type EditingMeasurementType = "distance" | "area" | "polyline" | "circle";
 
+export type TourStatus = "idle" | "playing" | "paused";
+
+/** Segundos de interpolación entre dos paradas consecutivas del recorrido. */
+export const TOUR_LEG_DURATION_SECONDS = 2.5;
+
 export interface EditingMeasurement {
   id: string;
   type: EditingMeasurementType;
@@ -70,7 +75,8 @@ interface ViewerState {
   draggingIndex: number | null;
   lastCreatedMeasurementId: string | null;
   tourStops: TourStop[];
-  isTouring: boolean;
+  tourStatus: TourStatus;
+  tourTime: number;
   pendingTourCapture: { label: string | null } | null;
   setModelId: (modelId: string | null) => void;
   setActiveTool: (tool: ActiveTool) => void;
@@ -106,7 +112,11 @@ interface ViewerState {
   requestTourCapture: (label: string | null) => void;
   clearTourCaptureRequest: () => void;
   startTour: () => void;
+  pauseTour: () => void;
+  resumeTour: () => void;
   stopTour: () => void;
+  seekTour: (time: number) => void;
+  setTourTime: (time: number) => void;
 }
 
 export const useViewerStore = create<ViewerState>((set) => ({
@@ -125,7 +135,8 @@ export const useViewerStore = create<ViewerState>((set) => ({
   draggingIndex: null,
   lastCreatedMeasurementId: null,
   tourStops: [],
-  isTouring: false,
+  tourStatus: "idle",
+  tourTime: 0,
   pendingTourCapture: null,
 
   setModelId: (modelId) => set({ modelId }),
@@ -295,7 +306,24 @@ export const useViewerStore = create<ViewerState>((set) => ({
 
   clearTourCaptureRequest: () => set({ pendingTourCapture: null }),
 
-  startTour: () => set((state) => (state.tourStops.length > 0 ? { isTouring: true } : {})),
+  startTour: () =>
+    set((state) => (state.tourStops.length > 0 ? { tourStatus: "playing", tourTime: 0 } : {})),
 
-  stopTour: () => set({ isTouring: false }),
+  pauseTour: () => set((state) => (state.tourStatus === "playing" ? { tourStatus: "paused" } : {})),
+
+  resumeTour: () => set((state) => (state.tourStatus === "paused" ? { tourStatus: "playing" } : {})),
+
+  stopTour: () => set({ tourStatus: "idle", tourTime: 0 }),
+
+  seekTour: (time) =>
+    set((state) => {
+      const totalDuration = Math.max(state.tourStops.length - 1, 0) * TOUR_LEG_DURATION_SECONDS;
+      const clamped = Math.max(0, Math.min(time, totalDuration));
+      return {
+        tourTime: clamped,
+        tourStatus: state.tourStatus === "idle" ? "paused" : state.tourStatus,
+      };
+    }),
+
+  setTourTime: (time) => set({ tourTime: time }),
 }));

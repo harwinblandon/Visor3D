@@ -13,7 +13,7 @@ export function CameraRig({ target }: CameraRigProps) {
   const { camera } = useThree();
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const isDragging = useViewerStore((s) => s.draggingIndex !== null);
-  const isTouring = useViewerStore((s) => s.isTouring);
+  const isTouring = useViewerStore((s) => s.tourStatus !== "idle");
 
   useEffect(() => {
     if (!target || !controlsRef.current) return;

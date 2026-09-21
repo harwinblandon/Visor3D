@@ -18,6 +18,7 @@ import { AnnotationDetail } from "../components/AnnotationDetail";
 import { LocationMap } from "../components/LocationMap";
 import { TourManager } from "../components/TourManager";
 import { TourPlayerBar } from "../components/TourPlayerBar";
+import { WelcomeBanner } from "../components/WelcomeBanner";
 import { useViewerStore } from "../state/viewerStore";
 import { modelFileUrl } from "../api/models";
 import { listMeasurements } from "../api/measurements";
@@ -56,6 +57,7 @@ export function Viewer3D({
   const setPendingAnnotation = useViewerStore((s) => s.setPendingAnnotation);
   const setAnnotations = useViewerStore((s) => s.setAnnotations);
   const setPendingCircleNormal = useViewerStore((s) => s.setPendingCircleNormal);
+  const requestRecenter = useViewerStore((s) => s.requestRecenter);
   const draggingIndex = useViewerStore((s) => s.draggingIndex);
   const updateDragPoint = useViewerStore((s) => s.updateDragPoint);
   const endDrag = useViewerStore((s) => s.endDrag);
@@ -147,11 +149,13 @@ export function Viewer3D({
     }
   };
 
-  const handleSurfaceDoubleClick = () => {
+  const handleSurfaceDoubleClick = (point: Vector3) => {
     if (activeTool === "measure-area") {
       finalizeAreaPolygon();
     } else if (activeTool === "vectorize-polyline") {
       finalizePolyline();
+    } else if (activeTool === "none") {
+      requestRecenter(point.clone());
     }
   };
 
@@ -180,6 +184,7 @@ export function Viewer3D({
       <AnnotationDetail />
       <AnnotationForm />
       <LoadingOverlay />
+      <WelcomeBanner />
       {showLocationMap && hasLocation && (
         <LocationMap
           latitude={model.latitude as number}

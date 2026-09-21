@@ -225,17 +225,25 @@ export function Toolbar({
         gap: isMobile ? 8 : 16,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 14, flexShrink: 0, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 14, flex: "1 1 auto", minWidth: 0, overflow: "hidden" }}>
         <img src="/logo.png" alt="Logo" style={{ height: isMobile ? 34 : 57, width: "auto", display: "block", flexShrink: 0 }} />
-        {!isMobile && (
-          <>
-            <div style={{ width: 1, height: 28, background: theme.color.border }} />
-            <span style={{ color: theme.color.textMuted, fontFamily: theme.font, fontSize: 13 }}>{modelName}</span>
-          </>
-        )}
+        <div style={{ width: 1, height: 28, background: theme.color.border, flexShrink: 0 }} />
+        <span
+          style={{
+            color: theme.color.textMuted,
+            fontFamily: theme.font,
+            fontSize: isMobile ? 12 : 13,
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {modelName}
+        </span>
       </div>
 
-      <div style={{ display: "flex", gap: isMobile ? 6 : 8, alignItems: "center", minWidth: 0 }}>
+      <div style={{ display: "flex", gap: isMobile ? 6 : 8, alignItems: "center", flexShrink: 0 }}>
         {editingMeasurement ? (
           <div
             style={{

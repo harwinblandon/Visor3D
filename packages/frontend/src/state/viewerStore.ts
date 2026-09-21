@@ -78,6 +78,7 @@ interface ViewerState {
   tourStatus: TourStatus;
   tourTime: number;
   pendingTourCapture: { label: string | null } | null;
+  recenterRequest: Vector3 | null;
   setModelId: (modelId: string | null) => void;
   setActiveTool: (tool: ActiveTool) => void;
   addPendingPoint: (point: Vector3) => void;
@@ -117,6 +118,8 @@ interface ViewerState {
   stopTour: () => void;
   seekTour: (time: number) => void;
   setTourTime: (time: number) => void;
+  requestRecenter: (point: Vector3) => void;
+  clearRecenterRequest: () => void;
 }
 
 export const useViewerStore = create<ViewerState>((set) => ({
@@ -138,6 +141,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
   tourStatus: "idle",
   tourTime: 0,
   pendingTourCapture: null,
+  recenterRequest: null,
 
   setModelId: (modelId) => set({ modelId }),
 
@@ -326,4 +330,8 @@ export const useViewerStore = create<ViewerState>((set) => ({
     }),
 
   setTourTime: (time) => set({ tourTime: time }),
+
+  requestRecenter: (point) => set({ recenterRequest: point }),
+
+  clearRecenterRequest: () => set({ recenterRequest: null }),
 }));

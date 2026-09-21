@@ -7,7 +7,7 @@ interface ModelLoaderProps {
   url: string;
   onLoaded?: (bounds: { center: Vector3; size: Vector3 }) => void;
   onSurfaceClick?: (point: Vector3, normal: Vector3 | null) => void;
-  onSurfaceDoubleClick?: () => void;
+  onSurfaceDoubleClick?: (point: Vector3) => void;
   onSurfacePointerMove?: (point: Vector3) => void;
 }
 
@@ -39,7 +39,7 @@ export function ModelLoader({
 
   const handleDoubleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
-    onSurfaceDoubleClick?.();
+    onSurfaceDoubleClick?.(event.point);
   };
 
   const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {

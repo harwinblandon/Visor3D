@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useViewerStore, type EditingMeasurementType, type MeasurementMeta } from "../state/viewerStore";
+import { useViewerStore, type ActiveTool, type EditingMeasurementType, type MeasurementMeta } from "../state/viewerStore";
 import { deleteMeasurement, updateMeasurement } from "../api/measurements";
 import { computeDistance, computePolylineLength } from "../viewer/math/distance";
 import { computeNewellArea } from "../viewer/math/polygonArea";
@@ -197,7 +197,10 @@ function Row({
   );
 }
 
+const MEASURING_TOOLS: ActiveTool[] = ["measure-distance", "measure-area", "vectorize-polyline", "measure-circle"];
+
 export function MeasurementList() {
+  const activeTool = useViewerStore((s) => s.activeTool);
   const distanceMeasurements = useViewerStore((s) => s.distanceMeasurements);
   const areaMeasurements = useViewerStore((s) => s.areaMeasurements);
   const polylineMeasurements = useViewerStore((s) => s.polylineMeasurements);
@@ -269,6 +272,8 @@ export function MeasurementList() {
   const isMobile = useIsMobile();
   const topOffset = isMobile ? 64 : 92;
 
+  if (isEmpty && !MEASURING_TOOLS.includes(activeTool)) return null;
+
   return (
     <div
       style={{
@@ -305,7 +310,7 @@ export function MeasurementList() {
 
       {isEmpty && (
         <div style={{ padding: 14, color: theme.color.textMuted, fontSize: 12 }}>
-          Ninguna todavía. Usa las herramientas de la barra superior.
+          Haz clic sobre el modelo para empezar.
         </div>
       )}
 

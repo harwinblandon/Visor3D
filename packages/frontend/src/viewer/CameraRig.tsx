@@ -14,6 +14,9 @@ export function CameraRig({ target }: CameraRigProps) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const isDragging = useViewerStore((s) => s.draggingIndex !== null);
   const isTouring = useViewerStore((s) => s.tourStatus !== "idle");
+  const recenterRequest = useViewerStore((s) => s.recenterRequest);
+  const clearRecenterRequest = useViewerStore((s) => s.clearRecenterRequest);
+  const minDistanceRef = useRef(0.05);
 
   useEffect(() => {
     if (!target || !controlsRef.current) return;
@@ -32,9 +35,21 @@ export function CameraRig({ target }: CameraRigProps) {
     perspectiveCamera.far = maxDim * 100;
     perspectiveCamera.updateProjectionMatrix();
 
+    // Distancia minima de zoom: evita que el dolly de OrbitControls se
+    // "pegue" acercandose asintoticamente al pivote sin nunca llegar.
+    minDistanceRef.current = Math.max(maxDim * 0.002, 0.05);
+    controlsRef.current.minDistance = minDistanceRef.current;
+
     controlsRef.current.target.copy(center);
     controlsRef.current.update();
   }, [target, camera]);
+
+  useEffect(() => {
+    if (!recenterRequest || !controlsRef.current) return;
+    controlsRef.current.target.copy(recenterRequest);
+    controlsRef.current.update();
+    clearRecenterRequest();
+  }, [recenterRequest, clearRecenterRequest]);
 
   return <OrbitControls ref={controlsRef} makeDefault enableDamping enabled={!isDragging && !isTouring} />;
 }

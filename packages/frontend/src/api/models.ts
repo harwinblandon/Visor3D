@@ -57,6 +57,26 @@ export function activateModel(id: string): Promise<Model> {
   });
 }
 
+export interface UpdateModelInput {
+  name?: string;
+  crsDescription?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  notes?: string | null;
+}
+
+export function updateModel(id: string, patch: UpdateModelInput): Promise<Model> {
+  const adminKey = getStoredAdminKey();
+  return apiFetch<Model>(`/api/models/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(adminKey ? { "x-admin-key": adminKey } : {}),
+    },
+    body: JSON.stringify(patch),
+  });
+}
+
 export function setModelPublished(id: string, isPublished: boolean): Promise<Model> {
   const adminKey = getStoredAdminKey();
   return apiFetch<Model>(`/api/models/${id}/publish`, {

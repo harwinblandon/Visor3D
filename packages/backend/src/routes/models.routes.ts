@@ -10,6 +10,7 @@ modelsRouter.post("/", requireAdmin, uploadModelMiddleware.single("file"), contr
 modelsRouter.get("/", requireAdmin, controller.listModels);
 modelsRouter.get("/active", controller.getActiveModel);
 modelsRouter.get("/:id", controller.getModelById);
+modelsRouter.patch("/:id", requireAdmin, controller.updateModel);
 modelsRouter.patch("/:id/activate", requireAdmin, controller.activateModel);
 modelsRouter.patch("/:id/publish", requireAdmin, controller.setPublished);
 modelsRouter.delete("/:id", requireAdmin, controller.deleteModel);

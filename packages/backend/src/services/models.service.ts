@@ -120,6 +120,33 @@ export async function setPublished(id: string, isPublished: boolean): Promise<Mo
   return rows[0] ? mapRow(rows[0]) : null;
 }
 
+export interface UpdateModelInput {
+  name?: string;
+  crsDescription?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  notes?: string | null;
+}
+
+export async function updateModel(id: string, patch: UpdateModelInput): Promise<Model | null> {
+  const { rows: currentRows } = await pool.query<ModelRow>("SELECT * FROM models WHERE id = $1", [id]);
+  const current = currentRows[0];
+  if (!current) return null;
+
+  const name = patch.name !== undefined ? patch.name : current.name;
+  const crsDescription = patch.crsDescription !== undefined ? patch.crsDescription : current.crs_description;
+  const latitude = patch.latitude !== undefined ? patch.latitude : current.latitude;
+  const longitude = patch.longitude !== undefined ? patch.longitude : current.longitude;
+  const notes = patch.notes !== undefined ? patch.notes : current.notes;
+
+  const { rows } = await pool.query<ModelRow>(
+    `UPDATE models SET name = $2, crs_description = $3, latitude = $4, longitude = $5, notes = $6
+     WHERE id = $1 RETURNING *`,
+    [id, name, crsDescription, latitude, longitude, notes],
+  );
+  return rows[0] ? mapRow(rows[0]) : null;
+}
+
 export interface DeletedModelFiles {
   modelFilePath: string;
   photoFilePaths: string[];

@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import type { Model } from "@visor3d/shared";
-import { listModels, activateModel, deleteModel, setModelPublished, modelShareUrl } from "../api/models";
+import { listModels, activateModel, deleteModel, setModelPublished, updateModel, modelShareUrl } from "../api/models";
+import { LocationPicker } from "./LocationPicker";
 import { theme } from "../styles/theme";
 
 interface ModelManagerProps {
   onActivated: (model: Model) => void;
+  onUpdated: (model: Model) => void;
   onUploadNew: () => void;
   onClose: () => void;
 }
@@ -30,12 +32,144 @@ const actionButtonStyle: React.CSSProperties = {
   fontWeight: 600,
 };
 
-export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManagerProps) {
+const inputStyle: React.CSSProperties = {
+  padding: "8px 10px",
+  borderRadius: 6,
+  border: `1px solid ${theme.color.border}`,
+  background: theme.color.panel,
+  color: theme.color.text,
+  fontFamily: theme.font,
+  fontSize: 12,
+  outline: "none",
+  width: "100%",
+  boxSizing: "border-box",
+};
+
+interface ModelEditFormProps {
+  model: Model;
+  onCancel: () => void;
+  onSaved: (model: Model) => void;
+}
+
+function ModelEditForm({ model, onCancel, onSaved }: ModelEditFormProps) {
+  const [name, setName] = useState(model.name);
+  const [crsDescription, setCrsDescription] = useState(model.crsDescription ?? "");
+  const [latitude, setLatitude] = useState(model.latitude !== null ? String(model.latitude) : "");
+  const [longitude, setLongitude] = useState(model.longitude !== null ? String(model.longitude) : "");
+  const [showPicker, setShowPicker] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      setError("El nombre no puede quedar vacío");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const saved = await updateModel(model.id, {
+        name: name.trim(),
+        crsDescription: crsDescription.trim() || null,
+        latitude: latitude.trim() ? Number(latitude) : null,
+        longitude: longitude.trim() ? Number(longitude) : null,
+      });
+      onSaved(saved);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al guardar los cambios");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <label style={{ color: theme.color.textMuted, fontSize: 11 }}>
+        Nombre
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} style={{ ...inputStyle, marginTop: 4 }} />
+      </label>
+
+      <label style={{ color: theme.color.textMuted, fontSize: 11 }}>
+        Descripción del CRS (opcional)
+        <input
+          type="text"
+          value={crsDescription}
+          onChange={(e) => setCrsDescription(e.target.value)}
+          placeholder="Ej. Local, centrado en obra"
+          style={{ ...inputStyle, marginTop: 4 }}
+        />
+      </label>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <label style={{ color: theme.color.textMuted, fontSize: 11, flex: 1 }}>
+          Latitud
+          <input
+            type="number"
+            step="any"
+            value={latitude}
+            onChange={(e) => setLatitude(e.target.value)}
+            placeholder="Ej. 4.6097"
+            style={{ ...inputStyle, marginTop: 4 }}
+          />
+        </label>
+        <label style={{ color: theme.color.textMuted, fontSize: 11, flex: 1 }}>
+          Longitud
+          <input
+            type="number"
+            step="any"
+            value={longitude}
+            onChange={(e) => setLongitude(e.target.value)}
+            placeholder="Ej. -74.0817"
+            style={{ ...inputStyle, marginTop: 4 }}
+          />
+        </label>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setShowPicker((v) => !v)}
+        style={{ ...actionButtonStyle, color: theme.color.accent, borderColor: theme.color.accent, alignSelf: "flex-start" }}
+      >
+        {showPicker ? "Ocultar mapa" : "📍 Marcar ubicación en el mapa"}
+      </button>
+
+      {showPicker && (
+        <LocationPicker
+          latitude={latitude.trim() ? Number(latitude) : null}
+          longitude={longitude.trim() ? Number(longitude) : null}
+          onPick={(lat, lng) => {
+            setLatitude(lat.toFixed(6));
+            setLongitude(lng.toFixed(6));
+          }}
+        />
+      )}
+
+      {error && <p style={{ color: theme.color.danger, fontSize: 11, margin: 0 }}>{error}</p>}
+
+      <div style={{ display: "flex", gap: 6 }}>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          style={{ flex: 1, padding: "8px 10px", borderRadius: 6, border: "none", background: theme.color.accent, color: "#0b0d10", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
+        >
+          {saving ? "Guardando..." : "Guardar cambios"}
+        </button>
+        <button type="button" onClick={onCancel} style={{ flex: 1, ...actionButtonStyle, padding: "8px 10px" }}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function ModelManager({ onActivated, onUpdated, onUploadNew, onClose }: ModelManagerProps) {
   const [models, setModels] = useState<Model[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const reload = () => {
     listModels()
@@ -94,6 +228,8 @@ export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManager
       setBusyId(null);
     }
   };
+
+  const isBusy = busyId !== null || editingId !== null;
 
   return (
     <div
@@ -187,60 +323,87 @@ export function ModelManager({ onActivated, onUploadNew, onClose }: ModelManager
                 </div>
                 <div style={{ color: theme.color.textMuted, fontSize: 11, marginTop: 2 }}>
                   {formatDate(m.uploadedAt)} · {formatSize(m.fileSizeBytes)}
+                  {m.crsDescription && ` · ${m.crsDescription}`}
                 </div>
+                {m.latitude !== null && m.longitude !== null && (
+                  <div style={{ color: theme.color.textMuted, fontSize: 11 }}>
+                    📍 {m.latitude.toFixed(5)}, {m.longitude.toFixed(5)}
+                  </div>
+                )}
               </div>
 
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                <button type="button" onClick={() => handleCopyLink(m)} style={{ ...actionButtonStyle, color: theme.color.accent, borderColor: theme.color.accent }}>
-                  {copiedId === m.id ? "¡Copiado!" : "Copiar enlace"}
-                </button>
+              {editingId === m.id ? (
+                <ModelEditForm
+                  model={m}
+                  onCancel={() => setEditingId(null)}
+                  onSaved={(saved) => {
+                    setEditingId(null);
+                    reload();
+                    onUpdated(saved);
+                  }}
+                />
+              ) : (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    disabled={isBusy}
+                    onClick={() => setEditingId(m.id)}
+                    style={{ ...actionButtonStyle, color: theme.color.accent, borderColor: theme.color.accent }}
+                  >
+                    ✎ Editar info
+                  </button>
 
-                <button
-                  type="button"
-                  disabled={busyId === m.id}
-                  onClick={() => handleTogglePublished(m)}
-                  style={actionButtonStyle}
-                >
-                  {m.isPublished ? "Ocultar" : "Publicar"}
-                </button>
+                  <button type="button" onClick={() => handleCopyLink(m)} style={{ ...actionButtonStyle, color: theme.color.accent, borderColor: theme.color.accent }}>
+                    {copiedId === m.id ? "¡Copiado!" : "Copiar enlace"}
+                  </button>
 
-                {!m.isActive && (
                   <button
                     type="button"
                     disabled={busyId === m.id}
-                    onClick={() => handleActivate(m.id)}
-                    style={{ ...actionButtonStyle, color: theme.color.accent, borderColor: theme.color.accent }}
+                    onClick={() => handleTogglePublished(m)}
+                    style={actionButtonStyle}
                   >
-                    Trabajar en este
+                    {m.isPublished ? "Ocultar" : "Publicar"}
                   </button>
-                )}
 
-                {confirmDeleteId === m.id ? (
-                  <>
+                  {!m.isActive && (
                     <button
                       type="button"
                       disabled={busyId === m.id}
-                      onClick={() => handleDelete(m.id)}
-                      style={{ padding: "6px 10px", borderRadius: 6, border: "none", background: theme.color.danger, color: "#fff", cursor: "pointer", fontSize: 11, fontWeight: 600 }}
+                      onClick={() => handleActivate(m.id)}
+                      style={{ ...actionButtonStyle, color: theme.color.accent, borderColor: theme.color.accent }}
                     >
-                      Confirmar borrado
+                      Trabajar en este
                     </button>
-                    <button type="button" onClick={() => setConfirmDeleteId(null)} style={actionButtonStyle}>
-                      Cancelar
+                  )}
+
+                  {confirmDeleteId === m.id ? (
+                    <>
+                      <button
+                        type="button"
+                        disabled={busyId === m.id}
+                        onClick={() => handleDelete(m.id)}
+                        style={{ padding: "6px 10px", borderRadius: 6, border: "none", background: theme.color.danger, color: "#fff", cursor: "pointer", fontSize: 11, fontWeight: 600 }}
+                      >
+                        Confirmar borrado
+                      </button>
+                      <button type="button" onClick={() => setConfirmDeleteId(null)} style={actionButtonStyle}>
+                        Cancelar
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteId(m.id)}
+                      style={actionButtonStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = theme.color.danger)}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = theme.color.textMuted)}
+                    >
+                      Eliminar
                     </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDeleteId(m.id)}
-                    style={actionButtonStyle}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = theme.color.danger)}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = theme.color.textMuted)}
-                  >
-                    Eliminar
-                  </button>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

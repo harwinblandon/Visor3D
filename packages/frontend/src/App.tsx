@@ -117,6 +117,9 @@ function App() {
             setModel(activated);
             setIsManagerOpen(false);
           }}
+          onUpdated={(updated) => {
+            setModel((current) => (current && current.id === updated.id ? updated : current));
+          }}
         />
       )}
     </>

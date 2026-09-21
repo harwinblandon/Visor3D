@@ -89,6 +89,28 @@ export async function activateModel(req: Request, res: Response, next: NextFunct
   }
 }
 
+export async function updateModel(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { name, crsDescription, latitude, longitude, notes } = req.body;
+    if (name !== undefined && !String(name).trim()) {
+      return res.status(400).json({ error: "El nombre no puede quedar vacío" });
+    }
+
+    const patch: Record<string, unknown> = {};
+    if (name !== undefined) patch.name = name;
+    if (crsDescription !== undefined) patch.crsDescription = crsDescription || null;
+    if (latitude !== undefined) patch.latitude = latitude === null ? null : Number(latitude);
+    if (longitude !== undefined) patch.longitude = longitude === null ? null : Number(longitude);
+    if (notes !== undefined) patch.notes = notes || null;
+
+    const model = await modelsService.updateModel(req.params.id, patch);
+    if (!model) return res.status(404).json({ error: "Modelo no encontrado" });
+    res.json(model);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function setPublished(req: Request, res: Response, next: NextFunction) {
   try {
     const { isPublished } = req.body;

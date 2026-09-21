@@ -16,7 +16,10 @@ export function CameraRig({ target }: CameraRigProps) {
   const isTouring = useViewerStore((s) => s.tourStatus !== "idle");
   const recenterRequest = useViewerStore((s) => s.recenterRequest);
   const clearRecenterRequest = useViewerStore((s) => s.clearRecenterRequest);
+  const lookAroundMode = useViewerStore((s) => s.lookAroundMode);
   const minDistanceRef = useRef(0.05);
+  const maxDimRef = useRef(1);
+  const lookAroundEpsilonRef = useRef(0.1);
 
   useEffect(() => {
     if (!target || !controlsRef.current) return;
@@ -24,6 +27,7 @@ export function CameraRig({ target }: CameraRigProps) {
     const { center, size } = target;
     const maxDim = Math.max(size.x, size.y, size.z);
     const distance = maxDim * 1.5;
+    maxDimRef.current = maxDim;
 
     const perspectiveCamera = camera as PerspectiveCamera;
     perspectiveCamera.position.set(
@@ -38,6 +42,7 @@ export function CameraRig({ target }: CameraRigProps) {
     // Distancia minima de zoom: evita que el dolly de OrbitControls se
     // "pegue" acercandose asintoticamente al pivote sin nunca llegar.
     minDistanceRef.current = Math.max(maxDim * 0.002, 0.05);
+    lookAroundEpsilonRef.current = Math.max(maxDim * 0.005, 0.1);
     controlsRef.current.minDistance = minDistanceRef.current;
 
     controlsRef.current.target.copy(center);
@@ -50,6 +55,36 @@ export function CameraRig({ target }: CameraRigProps) {
     controlsRef.current.update();
     clearRecenterRequest();
   }, [recenterRequest, clearRecenterRequest]);
+
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+
+    if (lookAroundMode) {
+      // "Mirar alrededor": el pivote de orbita se fija casi encima de la
+      // propia camara (distancia minima = maxima = epsilon), asi que
+      // arrastrar solo rota la vista en el sitio en vez de orbitar
+      // alrededor de un punto lejano.
+      const epsilon = lookAroundEpsilonRef.current;
+      const forward = new Vector3();
+      camera.getWorldDirection(forward);
+      controls.target.copy(camera.position).addScaledVector(forward, epsilon);
+      controls.minDistance = epsilon;
+      controls.maxDistance = epsilon;
+      controls.enablePan = false;
+      controls.enableZoom = false;
+    } else {
+      const forward = new Vector3();
+      camera.getWorldDirection(forward);
+      const distance = Math.max(maxDimRef.current * 0.3, 1);
+      controls.target.copy(camera.position).addScaledVector(forward, distance);
+      controls.minDistance = minDistanceRef.current;
+      controls.maxDistance = Infinity;
+      controls.enablePan = true;
+      controls.enableZoom = true;
+    }
+    controls.update();
+  }, [lookAroundMode, camera]);
 
   return <OrbitControls ref={controlsRef} makeDefault enableDamping enabled={!isDragging && !isTouring} />;
 }

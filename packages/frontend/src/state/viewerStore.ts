@@ -79,6 +79,7 @@ interface ViewerState {
   tourTime: number;
   pendingTourCapture: { label: string | null } | null;
   recenterRequest: Vector3 | null;
+  lookAroundMode: boolean;
   setModelId: (modelId: string | null) => void;
   setActiveTool: (tool: ActiveTool) => void;
   addPendingPoint: (point: Vector3) => void;
@@ -120,6 +121,8 @@ interface ViewerState {
   setTourTime: (time: number) => void;
   requestRecenter: (point: Vector3) => void;
   clearRecenterRequest: () => void;
+  setLookAroundMode: (enabled: boolean) => void;
+  toggleLookAroundMode: () => void;
 }
 
 export const useViewerStore = create<ViewerState>((set) => ({
@@ -142,6 +145,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
   tourTime: 0,
   pendingTourCapture: null,
   recenterRequest: null,
+  lookAroundMode: false,
 
   setModelId: (modelId) => set({ modelId }),
 
@@ -334,4 +338,8 @@ export const useViewerStore = create<ViewerState>((set) => ({
   requestRecenter: (point) => set({ recenterRequest: point }),
 
   clearRecenterRequest: () => set({ recenterRequest: null }),
+
+  setLookAroundMode: (enabled) => set({ lookAroundMode: enabled }),
+
+  toggleLookAroundMode: () => set((state) => ({ lookAroundMode: !state.lookAroundMode })),
 }));

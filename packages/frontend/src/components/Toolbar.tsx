@@ -152,6 +152,8 @@ export function Toolbar({
   const modelId = useViewerStore((s) => s.modelId);
   const editingMeasurement = useViewerStore((s) => s.editingMeasurement);
   const removeLastPendingPoint = useViewerStore((s) => s.removeLastPendingPoint);
+  const lookAroundMode = useViewerStore((s) => s.lookAroundMode);
+  const toggleLookAroundMode = useViewerStore((s) => s.toggleLookAroundMode);
   const isMobile = useIsMobile();
 
   const isMeasuringArea = activeTool === "measure-area";
@@ -312,6 +314,26 @@ export function Toolbar({
                 {isMobile ? "✓ Terminar" : "Finalizar polilínea"}
               </FinishButton>
             )}
+            <button
+              type="button"
+              onClick={toggleLookAroundMode}
+              title="Mirar alrededor: gira la cámara en el sitio en vez de orbitar"
+              style={{
+                padding: isMobile ? "8px 10px" : "8px 12px",
+                borderRadius: theme.radius,
+                border: `1px solid ${lookAroundMode ? theme.color.accent : theme.color.border}`,
+                background: lookAroundMode ? theme.color.accent : theme.color.panelAlt,
+                color: lookAroundMode ? "#0b0d10" : theme.color.text,
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: theme.font,
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+            >
+              {isMobile ? "👁" : lookAroundMode ? "👁 Mirando alrededor" : "👁 Mirar alrededor"}
+            </button>
           </>
         )}
 

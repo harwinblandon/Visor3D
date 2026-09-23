@@ -1,0 +1,269 @@
+import { useEffect, useRef, useState } from "react";
+import { Map as MapLibreMap, NavigationControl, AttributionControl, setWorkerUrl } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import type { Orthophoto } from "@visor3d/shared";
+import { getStoredAdminKey } from "../api/auth";
+import { orthophotoTileUrlTemplate } from "../api/orthophotos";
+import { listMeasurements } from "../api/measurements";
+import { listAnnotations } from "../api/annotations";
+import { useIsMobile } from "../hooks/useIsMobile";
+import { theme } from "../styles/theme";
+import { useOrthophotoStore } from "../state/orthophotoStore";
+import { MapContext } from "./MapContext";
+import { OrthophotoToolbar } from "./OrthophotoToolbar";
+import { MeasurementList2D } from "./MeasurementList2D";
+import { AnnotationForm2D } from "./AnnotationForm2D";
+import { AnnotationDetail2D } from "./AnnotationDetail2D";
+import { MeasureDistanceTool } from "./interactions/MeasureDistanceTool";
+import { MeasureAreaTool, finalizeAreaPolygon } from "./interactions/MeasureAreaTool";
+import { PolylineTool, finalizePolyline } from "./interactions/PolylineTool";
+import { CircleTool } from "./interactions/CircleTool";
+import { AnnotationTool } from "./interactions/AnnotationTool";
+import { EditableVertices } from "./interactions/EditableVertices";
+import { KmlLayers } from "./interactions/KmlLayers";
+import type { LngLat } from "./math/geo";
+
+interface OrthophotoViewerProps {
+  orthophoto: Orthophoto;
+  isAdmin: boolean;
+  onUnlock: (password: string) => Promise<boolean>;
+  onLock: () => void;
+  onOpenManager: () => void;
+}
+
+const POINT_TOOLS = new Set(["measure-distance", "measure-area", "vectorize-polyline", "measure-circle"]);
+
+// maplibre-gl calcula la URL de su web worker en base a la ubicacion del propio paquete;
+// eso se rompe al empaquetar para produccion (Rollup lo inlinea todo en un solo archivo),
+// asi que se apunta explicitamente a una copia estatica servida desde public/ (el worker
+// tambien importa maplibre-gl-shared.mjs como archivo hermano, por eso van los dos juntos).
+setWorkerUrl("/maplibre-gl-worker.mjs");
+
+export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpenManager }: OrthophotoViewerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<MapLibreMap | null>(null);
+  const [map, setMap] = useState<MapLibreMap | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const isMobile = useIsMobile();
+
+  const setOrthophotoId = useOrthophotoStore((s) => s.setOrthophotoId);
+  const setAnnotations = useOrthophotoStore((s) => s.setAnnotations);
+  const activeTool = useOrthophotoStore((s) => s.activeTool);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    setLoaded(false);
+    setMap(null);
+
+    const tilesPathPrefix = `/api/orthophotos/${orthophoto.id}/tiles/`;
+    const adminKey = getStoredAdminKey();
+
+    const mapInstance = new MapLibreMap({
+      container: containerRef.current,
+      style: {
+        version: 8,
+        sources: {
+          orthophoto: {
+            type: "raster",
+            tiles: [orthophotoTileUrlTemplate(orthophoto)],
+            tileSize: 256,
+            minzoom: orthophoto.minZoom,
+            maxzoom: orthophoto.maxZoom,
+            bounds: [orthophoto.boundsWest, orthophoto.boundsSouth, orthophoto.boundsEast, orthophoto.boundsNorth],
+          },
+        },
+        layers: [{ id: "orthophoto", type: "raster", source: "orthophoto" }],
+      },
+      attributionControl: false,
+      transformRequest: (url) => (adminKey && url.includes(tilesPathPrefix) ? { url, headers: { "x-admin-key": adminKey } } : { url }),
+    });
+
+    mapInstance.addControl(new AttributionControl({ compact: true }));
+    mapInstance.addControl(new NavigationControl({ showCompass: false }), "top-right");
+
+    mapInstance.on("click", (e) => {
+      const point: LngLat = [e.lngLat.lng, e.lngLat.lat];
+      const state = useOrthophotoStore.getState();
+      if (POINT_TOOLS.has(state.activeTool)) {
+        state.addPendingPoint(point);
+      } else if (state.activeTool === "annotate") {
+        state.setPendingAnnotation({ point });
+      }
+    });
+
+    mapInstance.on("dblclick", (e) => {
+      const state = useOrthophotoStore.getState();
+      if (state.activeTool === "measure-area" && state.pendingPoints.length >= 3) {
+        e.preventDefault();
+        finalizeAreaPolygon();
+      } else if (state.activeTool === "vectorize-polyline" && state.pendingPoints.length >= 2) {
+        e.preventDefault();
+        finalizePolyline();
+      }
+    });
+
+    mapInstance.on("load", () => {
+      mapInstance.fitBounds(
+        [
+          [orthophoto.boundsWest, orthophoto.boundsSouth],
+          [orthophoto.boundsEast, orthophoto.boundsNorth],
+        ],
+        { padding: 32, duration: 0 },
+      );
+      setLoaded(true);
+      setMap(mapInstance);
+    });
+
+    mapRef.current = mapInstance;
+
+    return () => {
+      mapInstance.remove();
+      mapRef.current = null;
+      setMap(null);
+    };
+  }, [orthophoto]);
+
+  useEffect(() => {
+    if (!map) return;
+    map.getCanvas().style.cursor = activeTool !== "none" ? "crosshair" : "";
+  }, [map, activeTool]);
+
+  useEffect(() => {
+    setOrthophotoId(orthophoto.id);
+
+    listMeasurements({ orthophotoId: orthophoto.id })
+      .then((rows) => {
+        const distanceMeasurements = rows
+          .filter((r) => r.type === "distance")
+          .map((r) => ({
+            id: r.id,
+            points: [
+              [r.points[0].x, r.points[0].y],
+              [r.points[1].x, r.points[1].y],
+            ] as [LngLat, LngLat],
+            distance: r.value,
+            label: r.label,
+            layer: r.layer,
+            note: r.note,
+          }));
+
+        const areaMeasurements = rows
+          .filter((r) => r.type === "area")
+          .map((r) => ({
+            id: r.id,
+            points: r.points.map((p) => [p.x, p.y] as LngLat),
+            area: r.value,
+            label: r.label,
+            layer: r.layer,
+            note: r.note,
+          }));
+
+        const polylineMeasurements = rows
+          .filter((r) => r.type === "polyline")
+          .map((r) => ({
+            id: r.id,
+            points: r.points.map((p) => [p.x, p.y] as LngLat),
+            length: r.value,
+            label: r.label,
+            layer: r.layer,
+            note: r.note,
+          }));
+
+        const circleMeasurements = rows
+          .filter((r) => r.type === "circle")
+          .map((r) => ({
+            id: r.id,
+            points: [
+              [r.points[0].x, r.points[0].y],
+              [r.points[1].x, r.points[1].y],
+            ] as [LngLat, LngLat],
+            radius: r.value,
+            label: r.label,
+            layer: r.layer,
+            note: r.note,
+          }));
+
+        useOrthophotoStore.setState({ distanceMeasurements, areaMeasurements, polylineMeasurements, circleMeasurements });
+      })
+      .catch((err) => console.error("No se pudieron cargar las mediciones guardadas:", err));
+
+    listAnnotations({ orthophotoId: orthophoto.id })
+      .then(setAnnotations)
+      .catch((err) => console.error("No se pudieron cargar las anotaciones guardadas:", err));
+  }, [orthophoto.id, setOrthophotoId, setAnnotations]);
+
+  return (
+    <MapContext.Provider value={map}>
+      <div style={{ width: "100vw", height: "100vh", background: theme.color.bg }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: isMobile ? 56 : 76,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: isMobile ? "0 10px" : "0 20px",
+            background: theme.color.panel,
+            borderBottom: `1px solid ${theme.color.border}`,
+            zIndex: 20,
+            boxSizing: "border-box",
+            gap: isMobile ? 8 : 16,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 14, flex: "1 1 auto", minWidth: 0, overflow: "hidden" }}>
+            <img src="/logo.png" alt="Logo" style={{ height: isMobile ? 34 : 57, width: "auto", display: "block", flexShrink: 0 }} />
+            <div style={{ width: 1, height: 28, background: theme.color.border, flexShrink: 0 }} />
+            <span
+              style={{
+                color: theme.color.textMuted,
+                fontFamily: theme.font,
+                fontSize: isMobile ? 12 : 13,
+                minWidth: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {orthophoto.name}
+            </span>
+          </div>
+          <OrthophotoToolbar isAdmin={isAdmin} onUnlock={onUnlock} onLock={onLock} onOpenManager={onOpenManager} />
+        </div>
+
+        <MeasurementList2D />
+        <AnnotationDetail2D />
+        <AnnotationForm2D />
+
+        {!loaded && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: theme.color.bg,
+              zIndex: 30,
+              fontFamily: theme.font,
+            }}
+          >
+            <span style={{ color: theme.color.textMuted, fontSize: 13 }}>Cargando ortofoto...</span>
+          </div>
+        )}
+
+        <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
+
+        <KmlLayers />
+        <MeasureDistanceTool />
+        <MeasureAreaTool />
+        <PolylineTool />
+        <CircleTool />
+        <AnnotationTool />
+        <EditableVertices map={map} />
+      </div>
+    </MapContext.Provider>
+  );
+}

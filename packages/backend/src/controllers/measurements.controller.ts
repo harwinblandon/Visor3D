@@ -3,12 +3,16 @@ import * as measurementsService from "../services/measurements.service.js";
 
 export async function createMeasurement(req: Request, res: Response, next: NextFunction) {
   try {
-    const { modelId, type, points, value, unit, label, layer, author, note } = req.body;
-    if (!modelId || !type || !points || value === undefined || !unit) {
-      return res.status(400).json({ error: "Faltan campos requeridos (modelId, type, points, value, unit)" });
+    const { modelId, orthophotoId, type, points, value, unit, label, layer, author, note } = req.body;
+    if ((!modelId && !orthophotoId) || (modelId && orthophotoId)) {
+      return res.status(400).json({ error: "Debe indicarse exactamente uno de 'modelId' u 'orthophotoId'" });
+    }
+    if (!type || !points || value === undefined || !unit) {
+      return res.status(400).json({ error: "Faltan campos requeridos (type, points, value, unit)" });
     }
     const measurement = await measurementsService.createMeasurement({
       modelId,
+      orthophotoId,
       type,
       points,
       value,
@@ -26,11 +30,16 @@ export async function createMeasurement(req: Request, res: Response, next: NextF
 
 export async function listMeasurements(req: Request, res: Response, next: NextFunction) {
   try {
-    const { modelId } = req.query;
-    if (!modelId || typeof modelId !== "string") {
-      return res.status(400).json({ error: "Falta el parámetro 'modelId'" });
+    const { modelId, orthophotoId } = req.query;
+    if ((!modelId || typeof modelId !== "string") && (!orthophotoId || typeof orthophotoId !== "string")) {
+      return res.status(400).json({ error: "Falta el parámetro 'modelId' u 'orthophotoId'" });
     }
-    res.json(await measurementsService.listMeasurements(modelId));
+    res.json(
+      await measurementsService.listMeasurements({
+        modelId: typeof modelId === "string" ? modelId : undefined,
+        orthophotoId: typeof orthophotoId === "string" ? orthophotoId : undefined,
+      }),
+    );
   } catch (err) {
     next(err);
   }

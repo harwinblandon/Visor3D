@@ -4,6 +4,10 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# python3/make/g++: requeridos por node-gyp para compilar el binding nativo de
+# better-sqlite3 (no hay binario prebuild para linux-musl en esta version).
+RUN apk add --no-cache python3 make g++
+
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json packages/shared/package.json
 COPY packages/backend/package.json packages/backend/package.json
@@ -29,9 +33,12 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/packages/shared ./packages/shared
 COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
 COPY --from=builder /app/packages/backend/package.json ./packages/backend/package.json
+# better-sqlite3 no queda hoisted a la raiz en este workspace (npm lo deja anidado
+# aqui), asi que hay que copiarlo aparte o el runtime no lo encuentra.
+COPY --from=builder /app/packages/backend/node_modules ./packages/backend/node_modules
 COPY --from=builder /app/packages/frontend/dist ./packages/frontend/dist
 
-RUN mkdir -p /app/packages/backend/uploads/models /app/packages/backend/uploads/photos
+RUN mkdir -p /app/packages/backend/uploads/models /app/packages/backend/uploads/photos /app/packages/backend/uploads/orthophotos
 
 EXPOSE 4000
 CMD ["sh", "-c", "node packages/backend/dist/db/migrate.js && node packages/backend/dist/server.js"]

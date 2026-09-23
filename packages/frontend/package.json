@@ -12,6 +12,10 @@
   "dependencies": {
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
+    "@turf/area": "^7.4.0",
+    "@turf/circle": "^7.4.0",
+    "@turf/distance": "^7.4.0",
+    "@turf/helpers": "^7.4.0",
     "earcut": "^3.2.3",
     "maplibre-gl": "^6.10.0",
     "react": "19.2.8",
@@ -21,6 +25,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@types/geojson": "^7946.0.16",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",

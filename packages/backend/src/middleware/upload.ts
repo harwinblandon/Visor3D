@@ -25,3 +25,15 @@ export const uploadPhotos = multer({
   storage: makeStorage("photos"),
   limits: { fileSize: 25 * 1024 * 1024 },
 });
+
+export const uploadOrthophoto = multer({
+  storage: makeStorage("orthophotos"),
+  limits: { fileSize: 2 * 1024 * 1024 * 1024 },
+});
+
+// Memoria en vez de disco: el .kml/.kmz solo se necesita de forma efimera para
+// convertirlo a GeoJSON (que es lo que se guarda); no hay que conservar el original.
+export const uploadOrthophotoLayer = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 },
+});

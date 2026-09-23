@@ -3,7 +3,8 @@ import { pool } from "../db/pool.js";
 
 interface AnnotationRow {
   id: string;
-  model_id: string;
+  model_id: string | null;
+  orthophoto_id: string | null;
   position_x: number;
   position_y: number;
   position_z: number;
@@ -44,6 +45,7 @@ function mapRow(row: AnnotationRow, photos: AnnotationPhoto[]): Annotation {
   return {
     id: row.id,
     modelId: row.model_id,
+    orthophotoId: row.orthophoto_id,
     position: { x: row.position_x, y: row.position_y, z: row.position_z },
     normal:
       row.normal_x !== null && row.normal_y !== null && row.normal_z !== null
@@ -62,7 +64,8 @@ function mapRow(row: AnnotationRow, photos: AnnotationPhoto[]): Annotation {
 }
 
 export interface CreateAnnotationInput {
-  modelId: string;
+  modelId?: string | null;
+  orthophotoId?: string | null;
   position: { x: number; y: number; z: number };
   normal?: { x: number; y: number; z: number } | null;
   damageType: DamageType;
@@ -75,11 +78,12 @@ export interface CreateAnnotationInput {
 export async function createAnnotation(input: CreateAnnotationInput): Promise<Annotation> {
   const { rows } = await pool.query<AnnotationRow>(
     `INSERT INTO annotations
-       (model_id, position_x, position_y, position_z, normal_x, normal_y, normal_z, damage_type, severity, description, author, detected_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       (model_id, orthophoto_id, position_x, position_y, position_z, normal_x, normal_y, normal_z, damage_type, severity, description, author, detected_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      RETURNING *`,
     [
-      input.modelId,
+      input.modelId ?? null,
+      input.orthophotoId ?? null,
       input.position.x,
       input.position.y,
       input.position.z,
@@ -97,14 +101,17 @@ export async function createAnnotation(input: CreateAnnotationInput): Promise<An
 }
 
 export async function listAnnotations(filters: {
-  modelId: string;
+  modelId?: string;
+  orthophotoId?: string;
   damageType?: string;
   severity?: string;
   from?: string;
   to?: string;
 }): Promise<Annotation[]> {
-  const conditions = ["model_id = $1"];
-  const params: unknown[] = [filters.modelId];
+  const column = filters.modelId ? "model_id" : "orthophoto_id";
+  const subjectId = filters.modelId ?? filters.orthophotoId;
+  const conditions = [`${column} = $1`];
+  const params: unknown[] = [subjectId];
 
   if (filters.damageType) {
     params.push(filters.damageType);

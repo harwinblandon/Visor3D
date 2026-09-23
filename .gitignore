@@ -11,6 +11,8 @@ packages/backend/uploads/**
 !packages/backend/uploads/models/.gitkeep
 !packages/backend/uploads/photos/
 !packages/backend/uploads/photos/.gitkeep
+!packages/backend/uploads/orthophotos/
+!packages/backend/uploads/orthophotos/.gitkeep
 
 .claude/settings.local.json
 .claude/scheduled_tasks.lock

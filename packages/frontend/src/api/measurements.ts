@@ -2,7 +2,8 @@ import type { Measurement, MeasurementType, Point3D } from "@visor3d/shared";
 import { apiFetch } from "./client";
 
 export interface CreateMeasurementInput {
-  modelId: string;
+  modelId?: string;
+  orthophotoId?: string;
   type: MeasurementType;
   points: Point3D[];
   value: number;
@@ -19,8 +20,9 @@ export function createMeasurement(input: CreateMeasurementInput): Promise<Measur
   });
 }
 
-export function listMeasurements(modelId: string): Promise<Measurement[]> {
-  return apiFetch<Measurement[]>(`/api/measurements?modelId=${encodeURIComponent(modelId)}`);
+export function listMeasurements(filter: { modelId?: string; orthophotoId?: string }): Promise<Measurement[]> {
+  const param = filter.modelId ? `modelId=${encodeURIComponent(filter.modelId)}` : `orthophotoId=${encodeURIComponent(filter.orthophotoId!)}`;
+  return apiFetch<Measurement[]>(`/api/measurements?${param}`);
 }
 
 export interface UpdateMeasurementInput {

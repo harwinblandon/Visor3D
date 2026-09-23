@@ -3,7 +3,8 @@ import { pool } from "../db/pool.js";
 
 interface MeasurementRow {
   id: string;
-  model_id: string;
+  model_id: string | null;
+  orthophoto_id: string | null;
   type: MeasurementType;
   points: Point3D[];
   value: number;
@@ -19,6 +20,7 @@ function mapRow(row: MeasurementRow): Measurement {
   return {
     id: row.id,
     modelId: row.model_id,
+    orthophotoId: row.orthophoto_id,
     type: row.type,
     points: row.points,
     value: Number(row.value),
@@ -32,7 +34,8 @@ function mapRow(row: MeasurementRow): Measurement {
 }
 
 export interface CreateMeasurementInput {
-  modelId: string;
+  modelId?: string | null;
+  orthophotoId?: string | null;
   type: MeasurementType;
   points: Point3D[];
   value: number;
@@ -45,11 +48,12 @@ export interface CreateMeasurementInput {
 
 export async function createMeasurement(input: CreateMeasurementInput): Promise<Measurement> {
   const { rows } = await pool.query<MeasurementRow>(
-    `INSERT INTO measurements (model_id, type, points, value, unit, label, layer, author, note)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `INSERT INTO measurements (model_id, orthophoto_id, type, points, value, unit, label, layer, author, note)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING *`,
     [
-      input.modelId,
+      input.modelId ?? null,
+      input.orthophotoId ?? null,
       input.type,
       JSON.stringify(input.points),
       input.value,
@@ -63,10 +67,17 @@ export async function createMeasurement(input: CreateMeasurementInput): Promise<
   return mapRow(rows[0]);
 }
 
-export async function listMeasurements(modelId: string): Promise<Measurement[]> {
+export interface ListMeasurementsFilter {
+  modelId?: string;
+  orthophotoId?: string;
+}
+
+export async function listMeasurements(filter: ListMeasurementsFilter): Promise<Measurement[]> {
+  const column = filter.modelId ? "model_id" : "orthophoto_id";
+  const value = filter.modelId ?? filter.orthophotoId;
   const { rows } = await pool.query<MeasurementRow>(
-    "SELECT * FROM measurements WHERE model_id = $1 ORDER BY created_at ASC",
-    [modelId],
+    `SELECT * FROM measurements WHERE ${column} = $1 ORDER BY created_at ASC`,
+    [value],
   );
   return rows.map(mapRow);
 }

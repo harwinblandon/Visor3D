@@ -5,6 +5,7 @@ import express from "express";
 import { pool } from "./db/pool.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { modelsRouter } from "./routes/models.routes.js";
+import { orthophotosRouter } from "./routes/orthophotos.routes.js";
 import { measurementsRouter } from "./routes/measurements.routes.js";
 import { annotationsRouter } from "./routes/annotations.routes.js";
 import { statsRouter } from "./routes/stats.routes.js";
@@ -31,6 +32,7 @@ app.get("/api/health", async (_req, res, next) => {
 });
 
 app.use("/api/models", modelsRouter);
+app.use("/api/orthophotos", orthophotosRouter);
 app.use("/api/measurements", measurementsRouter);
 app.use("/api/annotations", annotationsRouter);
 app.use("/api/stats", statsRouter);

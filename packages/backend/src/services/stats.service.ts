@@ -9,25 +9,32 @@ function zeroed<K extends string>(keys: K[]): Record<K, number> {
   return Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
 }
 
-export async function getSummary(modelId: string): Promise<StatsSummary> {
+export interface GetSummaryFilter {
+  modelId?: string;
+  orthophotoId?: string;
+}
+
+export async function getSummary(filter: GetSummaryFilter): Promise<StatsSummary> {
+  const column = filter.modelId ? "model_id" : "orthophoto_id";
+  const subjectId = filter.modelId ?? filter.orthophotoId;
   const [totalResult, byTypeResult, bySeverityResult, byStatusResult, overTimeResult] = await Promise.all([
-    pool.query("SELECT count(*) FROM annotations WHERE model_id = $1", [modelId]),
+    pool.query(`SELECT count(*) FROM annotations WHERE ${column} = $1`, [subjectId]),
     pool.query(
-      "SELECT damage_type, count(*) FROM annotations WHERE model_id = $1 GROUP BY damage_type",
-      [modelId],
+      `SELECT damage_type, count(*) FROM annotations WHERE ${column} = $1 GROUP BY damage_type`,
+      [subjectId],
     ),
     pool.query(
-      "SELECT severity, count(*) FROM annotations WHERE model_id = $1 GROUP BY severity",
-      [modelId],
+      `SELECT severity, count(*) FROM annotations WHERE ${column} = $1 GROUP BY severity`,
+      [subjectId],
     ),
     pool.query(
-      "SELECT status, count(*) FROM annotations WHERE model_id = $1 GROUP BY status",
-      [modelId],
+      `SELECT status, count(*) FROM annotations WHERE ${column} = $1 GROUP BY status`,
+      [subjectId],
     ),
     pool.query(
       `SELECT to_char(date_trunc('month', created_at), 'YYYY-MM') AS month, count(*)
-       FROM annotations WHERE model_id = $1 GROUP BY 1 ORDER BY 1`,
-      [modelId],
+       FROM annotations WHERE ${column} = $1 GROUP BY 1 ORDER BY 1`,
+      [subjectId],
     ),
   ]);
 

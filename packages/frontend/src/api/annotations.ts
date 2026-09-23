@@ -2,7 +2,8 @@ import type { Annotation, DamageType, Severity, AnnotationStatus, Point3D } from
 import { apiFetch } from "./client";
 
 export interface CreateAnnotationInput {
-  modelId: string;
+  modelId?: string;
+  orthophotoId?: string;
   position: Point3D;
   normal?: Point3D | null;
   damageType: DamageType;
@@ -20,8 +21,9 @@ export function createAnnotation(input: CreateAnnotationInput): Promise<Annotati
   });
 }
 
-export function listAnnotations(modelId: string): Promise<Annotation[]> {
-  return apiFetch<Annotation[]>(`/api/annotations?modelId=${encodeURIComponent(modelId)}`);
+export function listAnnotations(filter: { modelId?: string; orthophotoId?: string }): Promise<Annotation[]> {
+  const param = filter.modelId ? `modelId=${encodeURIComponent(filter.modelId)}` : `orthophotoId=${encodeURIComponent(filter.orthophotoId!)}`;
+  return apiFetch<Annotation[]>(`/api/annotations?${param}`);
 }
 
 export interface UpdateAnnotationInput {

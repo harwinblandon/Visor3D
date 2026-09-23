@@ -1,3 +1,5 @@
+import type { FeatureCollection } from "geojson";
+
 export interface Point3D {
   x: number;
   y: number;
@@ -20,11 +22,42 @@ export interface Model {
   uploadedAt: string;
 }
 
+export interface Orthophoto {
+  id: string;
+  name: string;
+  filename: string;
+  originalFilename: string | null;
+  filePath: string;
+  fileSizeBytes: number | null;
+  crsDescription: string | null;
+  boundsWest: number;
+  boundsSouth: number;
+  boundsEast: number;
+  boundsNorth: number;
+  minZoom: number;
+  maxZoom: number;
+  isPublished: boolean;
+  notes: string | null;
+  uploadedAt: string;
+}
+
+/** Capa vectorial subida como .kml/.kmz y convertida a GeoJSON, superpuesta sobre una ortofoto. */
+export interface OrthophotoLayer {
+  id: string;
+  orthophotoId: string;
+  name: string;
+  originalFilename: string | null;
+  geojson: FeatureCollection;
+  uploadedAt: string;
+}
+
 export type MeasurementType = "distance" | "area" | "polyline" | "circle";
 
+/** Punto {x,y,z}; para ortofotos x=longitud, y=latitud, z=0 (mismo esquema, coordenadas geográficas). */
 export interface Measurement {
   id: string;
-  modelId: string;
+  modelId: string | null;
+  orthophotoId: string | null;
   type: MeasurementType;
   points: Point3D[];
   value: number;
@@ -54,7 +87,8 @@ export interface AnnotationPhoto {
 
 export interface Annotation {
   id: string;
-  modelId: string;
+  modelId: string | null;
+  orthophotoId: string | null;
   position: Point3D;
   normal: Point3D | null;
   damageType: DamageType;

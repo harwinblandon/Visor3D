@@ -31,6 +31,7 @@ interface Viewer3DProps {
   onOpenDashboard: () => void;
   onUploadNewModel: () => void;
   onOpenManager: () => void;
+  onOpenOrthophotoManager: () => void;
   isAdmin: boolean;
   onUnlock: (password: string) => Promise<boolean>;
   onLock: () => void;
@@ -41,6 +42,7 @@ export function Viewer3D({
   onOpenDashboard,
   onUploadNewModel,
   onOpenManager,
+  onOpenOrthophotoManager,
   isAdmin,
   onUnlock,
   onLock,
@@ -76,7 +78,7 @@ export function Viewer3D({
   useEffect(() => {
     setModelId(model.id);
 
-    listMeasurements(model.id)
+    listMeasurements({ modelId: model.id })
       .then((rows) => {
         const distanceMeasurements = rows
           .filter((r) => r.type === "distance")
@@ -129,7 +131,7 @@ export function Viewer3D({
       })
       .catch((err) => console.error("No se pudieron cargar las mediciones guardadas:", err));
 
-    listAnnotations(model.id)
+    listAnnotations({ modelId: model.id })
       .then(setAnnotations)
       .catch((err) => console.error("No se pudieron cargar las anotaciones guardadas:", err));
 
@@ -179,6 +181,7 @@ export function Viewer3D({
         onUnlock={onUnlock}
         onLock={onLock}
         onOpenTourManager={() => setIsTourManagerOpen(true)}
+        onOpenOrthophotoManager={onOpenOrthophotoManager}
       />
       <MeasurementList />
       <AnnotationDetail />

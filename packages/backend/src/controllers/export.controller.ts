@@ -24,7 +24,7 @@ export async function exportModel(req: Request, res: Response, next: NextFunctio
     const model = await modelsService.getModelById(id);
     if (!model) return res.status(404).json({ error: "Modelo no encontrado" });
 
-    const measurements = await measurementsService.listMeasurements(id);
+    const measurements = await measurementsService.listMeasurements({ modelId: id });
     const baseName = slugify(model.name);
 
     if (format === "dxf") {

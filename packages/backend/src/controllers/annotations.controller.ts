@@ -17,12 +17,17 @@ async function safeUnlink(relativePath: string) {
 
 export async function createAnnotation(req: Request, res: Response, next: NextFunction) {
   try {
-    const { modelId, position, normal, damageType, severity, description, author, detectedAt } = req.body;
-    if (!modelId || !position || !damageType) {
-      return res.status(400).json({ error: "Faltan campos requeridos (modelId, position, damageType)" });
+    const { modelId, orthophotoId, position, normal, damageType, severity, description, author, detectedAt } =
+      req.body;
+    if ((!modelId && !orthophotoId) || (modelId && orthophotoId)) {
+      return res.status(400).json({ error: "Debe indicarse exactamente uno de 'modelId' u 'orthophotoId'" });
+    }
+    if (!position || !damageType) {
+      return res.status(400).json({ error: "Faltan campos requeridos (position, damageType)" });
     }
     const annotation = await annotationsService.createAnnotation({
       modelId,
+      orthophotoId,
       position,
       normal,
       damageType,
@@ -39,12 +44,13 @@ export async function createAnnotation(req: Request, res: Response, next: NextFu
 
 export async function listAnnotations(req: Request, res: Response, next: NextFunction) {
   try {
-    const { modelId, damageType, severity, from, to } = req.query;
-    if (!modelId || typeof modelId !== "string") {
-      return res.status(400).json({ error: "Falta el parámetro 'modelId'" });
+    const { modelId, orthophotoId, damageType, severity, from, to } = req.query;
+    if ((!modelId || typeof modelId !== "string") && (!orthophotoId || typeof orthophotoId !== "string")) {
+      return res.status(400).json({ error: "Falta el parámetro 'modelId' u 'orthophotoId'" });
     }
     const annotations = await annotationsService.listAnnotations({
-      modelId,
+      modelId: typeof modelId === "string" ? modelId : undefined,
+      orthophotoId: typeof orthophotoId === "string" ? orthophotoId : undefined,
       damageType: typeof damageType === "string" ? damageType : undefined,
       severity: typeof severity === "string" ? severity : undefined,
       from: typeof from === "string" ? from : undefined,

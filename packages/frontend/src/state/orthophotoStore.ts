@@ -4,6 +4,8 @@ import type { LngLat } from "../viewer2d/math/geo";
 
 export type ActiveTool2D = "none" | "measure-distance" | "measure-area" | "vectorize-polyline" | "measure-circle" | "annotate";
 
+export type BasemapId = "none" | "satellite" | "hybrid";
+
 export interface PendingAnnotation2D {
   point: LngLat;
 }
@@ -49,6 +51,7 @@ export interface EditingMeasurement2D {
 
 interface OrthophotoState {
   orthophotoId: string | null;
+  basemap: BasemapId;
   activeTool: ActiveTool2D;
   pendingPoints: LngLat[];
   distanceMeasurements: DistanceMeasurement2D[];
@@ -62,6 +65,7 @@ interface OrthophotoState {
   draggingIndex: number | null;
   lastCreatedMeasurementId: string | null;
   setOrthophotoId: (id: string | null) => void;
+  setBasemap: (basemap: BasemapId) => void;
   setActiveTool: (tool: ActiveTool2D) => void;
   addPendingPoint: (point: LngLat) => void;
   clearPendingPoints: () => void;
@@ -92,6 +96,7 @@ interface OrthophotoState {
 
 export const useOrthophotoStore = create<OrthophotoState>((set) => ({
   orthophotoId: null,
+  basemap: "none",
   activeTool: "none",
   pendingPoints: [],
   distanceMeasurements: [],
@@ -106,6 +111,8 @@ export const useOrthophotoStore = create<OrthophotoState>((set) => ({
   lastCreatedMeasurementId: null,
 
   setOrthophotoId: (orthophotoId) => set({ orthophotoId }),
+
+  setBasemap: (basemap) => set({ basemap }),
 
   setActiveTool: (tool) => set({ activeTool: tool, pendingPoints: [], pendingAnnotation: null }),
 

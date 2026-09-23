@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Map as MapLibreMap, NavigationControl, AttributionControl, setWorkerUrl } from "maplibre-gl";
+import { Map as MapLibreMap, NavigationControl, AttributionControl, GeolocateControl, setWorkerUrl, type MapMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Orthophoto } from "@visor3d/shared";
 import { getStoredAdminKey } from "../api/auth";
@@ -21,6 +21,16 @@ import { CircleTool } from "./interactions/CircleTool";
 import { AnnotationTool } from "./interactions/AnnotationTool";
 import { EditableVertices } from "./interactions/EditableVertices";
 import { KmlLayers } from "./interactions/KmlLayers";
+import {
+  SATELLITE_TILES,
+  SATELLITE_ATTRIBUTION,
+  HYBRID_LABELS_TILES,
+  HYBRID_LABELS_ATTRIBUTION,
+  SATELLITE_SOURCE_ID,
+  SATELLITE_LAYER_ID,
+  HYBRID_LABELS_SOURCE_ID,
+  HYBRID_LABELS_LAYER_ID,
+} from "./basemaps";
 import type { LngLat } from "./math/geo";
 
 interface OrthophotoViewerProps {
@@ -46,9 +56,12 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
   const [loaded, setLoaded] = useState(false);
   const isMobile = useIsMobile();
 
+  const [cursorCoords, setCursorCoords] = useState<LngLat | null>(null);
+
   const setOrthophotoId = useOrthophotoStore((s) => s.setOrthophotoId);
   const setAnnotations = useOrthophotoStore((s) => s.setAnnotations);
   const activeTool = useOrthophotoStore((s) => s.activeTool);
+  const basemap = useOrthophotoStore((s) => s.basemap);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -79,7 +92,16 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
     });
 
     mapInstance.addControl(new AttributionControl({ compact: true }));
-    mapInstance.addControl(new NavigationControl({ showCompass: false }), "top-right");
+    mapInstance.addControl(new NavigationControl({ showCompass: true, visualizePitch: false }), "top-right");
+    mapInstance.addControl(
+      new GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+      }),
+      "top-right",
+    );
+
+    mapInstance.on("mousemove", (e: MapMouseEvent) => setCursorCoords([e.lngLat.lng, e.lngLat.lat]));
 
     mapInstance.on("click", (e) => {
       const point: LngLat = [e.lngLat.lng, e.lngLat.lat];
@@ -127,6 +149,32 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
     if (!map) return;
     map.getCanvas().style.cursor = activeTool !== "none" ? "crosshair" : "";
   }, [map, activeTool]);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const removeIfExists = (layerId: string, sourceId: string) => {
+      if (map.getLayer(layerId)) map.removeLayer(layerId);
+      if (map.getSource(sourceId)) map.removeSource(sourceId);
+    };
+
+    removeIfExists(SATELLITE_LAYER_ID, SATELLITE_SOURCE_ID);
+    removeIfExists(HYBRID_LABELS_LAYER_ID, HYBRID_LABELS_SOURCE_ID);
+
+    if (basemap === "satellite" || basemap === "hybrid") {
+      map.addSource(SATELLITE_SOURCE_ID, { type: "raster", tiles: [SATELLITE_TILES], tileSize: 256, attribution: SATELLITE_ATTRIBUTION });
+      map.addLayer({ id: SATELLITE_LAYER_ID, type: "raster", source: SATELLITE_SOURCE_ID }, "orthophoto");
+    }
+    if (basemap === "hybrid") {
+      map.addSource(HYBRID_LABELS_SOURCE_ID, {
+        type: "raster",
+        tiles: [HYBRID_LABELS_TILES],
+        tileSize: 256,
+        attribution: HYBRID_LABELS_ATTRIBUTION,
+      });
+      map.addLayer({ id: HYBRID_LABELS_LAYER_ID, type: "raster", source: HYBRID_LABELS_SOURCE_ID }, "orthophoto");
+    }
+  }, [map, basemap]);
 
   useEffect(() => {
     setOrthophotoId(orthophoto.id);
@@ -255,6 +303,30 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
         )}
 
         <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
+
+        {cursorCoords && (
+          <div
+            onClick={() => navigator.clipboard?.writeText(`${cursorCoords[1].toFixed(6)}, ${cursorCoords[0].toFixed(6)}`)}
+            title="Clic para copiar"
+            style={{
+              position: "fixed",
+              bottom: 8,
+              left: 8,
+              padding: "5px 9px",
+              borderRadius: theme.radius,
+              background: "rgba(15,17,20,0.85)",
+              border: `1px solid ${theme.color.border}`,
+              color: theme.color.textMuted,
+              fontFamily: theme.font,
+              fontSize: 11,
+              zIndex: 12,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Lat {cursorCoords[1].toFixed(6)} · Lng {cursorCoords[0].toFixed(6)}
+          </div>
+        )}
 
         <KmlLayers />
         <MeasureDistanceTool />

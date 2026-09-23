@@ -1,4 +1,4 @@
-import { useOrthophotoStore, type ActiveTool2D } from "../state/orthophotoStore";
+import { useOrthophotoStore, type ActiveTool2D, type BasemapId } from "../state/orthophotoStore";
 import { finalizeAreaPolygon } from "./interactions/MeasureAreaTool";
 import { finalizePolyline } from "./interactions/PolylineTool";
 import { Dropdown, DropdownItem, DropdownDivider } from "../components/Dropdown";
@@ -21,6 +21,12 @@ const TOOL_COLORS: Partial<Record<ActiveTool2D, string>> = {
   "vectorize-polyline": theme.color.polyline,
   "measure-circle": theme.color.circle,
   annotate: theme.color.severity.alta,
+};
+
+const BASEMAP_LABELS: Record<BasemapId, string> = {
+  none: "Ninguno",
+  satellite: "Satelital",
+  hybrid: "Híbrido",
 };
 
 function FinishButton({ color, onClick, compact, children }: { color: string; onClick: () => void; compact?: boolean; children: React.ReactNode }) {
@@ -60,6 +66,8 @@ export function OrthophotoToolbar({ isAdmin, onUnlock, onLock, onOpenManager }: 
   const pendingPoints = useOrthophotoStore((s) => s.pendingPoints);
   const editingMeasurement = useOrthophotoStore((s) => s.editingMeasurement);
   const removeLastPendingPoint = useOrthophotoStore((s) => s.removeLastPendingPoint);
+  const basemap = useOrthophotoStore((s) => s.basemap);
+  const setBasemap = useOrthophotoStore((s) => s.setBasemap);
   const isMobile = useIsMobile();
 
   const isMeasuringArea = activeTool === "measure-area";
@@ -146,6 +154,14 @@ export function OrthophotoToolbar({ isAdmin, onUnlock, onLock, onOpenManager }: 
           )}
         </>
       )}
+
+      <Dropdown label={isMobile ? "🗺" : `Mapa base: ${BASEMAP_LABELS[basemap]}`}>
+        {(Object.keys(BASEMAP_LABELS) as BasemapId[]).map((b) => (
+          <DropdownItem key={b} active={basemap === b} onClick={() => setBasemap(b)}>
+            {BASEMAP_LABELS[b]}
+          </DropdownItem>
+        ))}
+      </Dropdown>
 
       {isAdmin ? (
         <Dropdown label={isMobile ? "⋮" : "Ortofoto"}>

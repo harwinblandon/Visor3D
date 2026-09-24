@@ -95,3 +95,29 @@ export function orthophotoShareUrl(orthophoto: Orthophoto): string {
 export function orthophotoTileUrlTemplate(orthophoto: Orthophoto): string {
   return `${window.location.origin}/api/orthophotos/${orthophoto.id}/tiles/{z}/{x}/{y}`;
 }
+
+export function orthophotoTerrainTileUrlTemplate(orthophoto: Orthophoto): string {
+  return `${window.location.origin}/api/orthophotos/${orthophoto.id}/terrain-tiles/{z}/{x}/{y}`;
+}
+
+export function uploadOrthophotoTerrain(id: string, file: File, minZoom: number, maxZoom: number): Promise<Orthophoto> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("minZoom", String(minZoom));
+  formData.append("maxZoom", String(maxZoom));
+
+  const adminKey = getStoredAdminKey();
+  return apiFetch<Orthophoto>(`/api/orthophotos/${id}/terrain`, {
+    method: "POST",
+    body: formData,
+    headers: adminKey ? { "x-admin-key": adminKey } : undefined,
+  });
+}
+
+export function deleteOrthophotoTerrain(id: string): Promise<Orthophoto> {
+  const adminKey = getStoredAdminKey();
+  return apiFetch<Orthophoto>(`/api/orthophotos/${id}/terrain`, {
+    method: "DELETE",
+    headers: adminKey ? { "x-admin-key": adminKey } : undefined,
+  });
+}

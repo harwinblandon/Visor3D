@@ -59,9 +59,10 @@ interface OrthophotoToolbarProps {
   onLock: () => void;
   onOpenManager: () => void;
   onOpenLayers: () => void;
+  onOpenTerrain: () => void;
 }
 
-export function OrthophotoToolbar({ isAdmin, onUnlock, onLock, onOpenManager, onOpenLayers }: OrthophotoToolbarProps) {
+export function OrthophotoToolbar({ isAdmin, onUnlock, onLock, onOpenManager, onOpenLayers, onOpenTerrain }: OrthophotoToolbarProps) {
   const activeTool = useOrthophotoStore((s) => s.activeTool);
   const setActiveTool = useOrthophotoStore((s) => s.setActiveTool);
   const pendingPoints = useOrthophotoStore((s) => s.pendingPoints);
@@ -167,6 +168,7 @@ export function OrthophotoToolbar({ isAdmin, onUnlock, onLock, onOpenManager, on
       {isAdmin ? (
         <Dropdown label={isMobile ? "⋮" : "Ortofoto"}>
           <DropdownItem onClick={onOpenLayers}>Capas KML/KMZ</DropdownItem>
+          <DropdownItem onClick={onOpenTerrain}>Terreno 3D</DropdownItem>
           <DropdownItem onClick={onOpenManager}>Gestionar ortofotos</DropdownItem>
           <DropdownDivider />
           <DropdownItem onClick={onLock}>Cerrar sesión de administrador</DropdownItem>

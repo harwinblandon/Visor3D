@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { Map as MapLibreMap, NavigationControl, AttributionControl, GeolocateControl, setWorkerUrl, type MapMouseEvent } from "maplibre-gl";
+import {
+  Map as MapLibreMap,
+  NavigationControl,
+  AttributionControl,
+  GeolocateControl,
+  TerrainControl,
+  setWorkerUrl,
+  type MapMouseEvent,
+} from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Orthophoto } from "@visor3d/shared";
 import { getStoredAdminKey } from "../api/auth";
-import { orthophotoTileUrlTemplate } from "../api/orthophotos";
+import { orthophotoTileUrlTemplate, orthophotoTerrainTileUrlTemplate } from "../api/orthophotos";
 import { listMeasurements } from "../api/measurements";
 import { listAnnotations } from "../api/annotations";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -22,6 +30,7 @@ import { AnnotationTool } from "./interactions/AnnotationTool";
 import { EditableVertices } from "./interactions/EditableVertices";
 import { KmlLayers } from "./interactions/KmlLayers";
 import { OrthophotoLayersPanel } from "./OrthophotoLayersPanel";
+import { OrthophotoTerrainPanel } from "./OrthophotoTerrainPanel";
 import {
   SATELLITE_TILES,
   SATELLITE_ATTRIBUTION,
@@ -43,6 +52,13 @@ interface OrthophotoViewerProps {
 }
 
 const POINT_TOOLS = new Set(["measure-distance", "measure-area", "vectorize-polyline", "measure-circle"]);
+const TERRAIN_SOURCE_ID = "orthophoto-terrain";
+
+interface TerrainOverride {
+  terrainPath: string | null;
+  terrainMinZoom: number | null;
+  terrainMaxZoom: number | null;
+}
 
 // maplibre-gl calcula la URL de su web worker en base a la ubicacion del propio paquete;
 // eso se rompe al empaquetar para produccion (Rollup lo inlinea todo en un solo archivo),
@@ -53,6 +69,7 @@ setWorkerUrl("/maplibre-gl-worker.mjs");
 export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpenManager }: OrthophotoViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const terrainControlRef = useRef<TerrainControl | null>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [loaded, setLoaded] = useState(false);
   const isMobile = useIsMobile();
@@ -60,6 +77,8 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
   const [cursorCoords, setCursorCoords] = useState<LngLat | null>(null);
   const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
   const [layersVersion, setLayersVersion] = useState(0);
+  const [isTerrainPanelOpen, setIsTerrainPanelOpen] = useState(false);
+  const [terrainOverride, setTerrainOverride] = useState<TerrainOverride | null>(null);
 
   const setOrthophotoId = useOrthophotoStore((s) => s.setOrthophotoId);
   const setAnnotations = useOrthophotoStore((s) => s.setAnnotations);
@@ -180,6 +199,35 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
   }, [map, basemap]);
 
   useEffect(() => {
+    if (!map) return;
+    const terrainPath = terrainOverride?.terrainPath ?? orthophoto.terrainPath;
+    const terrainMinZoom = terrainOverride?.terrainMinZoom ?? orthophoto.terrainMinZoom;
+    const terrainMaxZoom = terrainOverride?.terrainMaxZoom ?? orthophoto.terrainMaxZoom;
+
+    if (map.getTerrain()) map.setTerrain(null);
+    if (terrainControlRef.current) {
+      map.removeControl(terrainControlRef.current);
+      terrainControlRef.current = null;
+    }
+    if (map.getSource(TERRAIN_SOURCE_ID)) map.removeSource(TERRAIN_SOURCE_ID);
+
+    if (terrainPath && terrainMinZoom !== null && terrainMaxZoom !== null) {
+      map.addSource(TERRAIN_SOURCE_ID, {
+        type: "raster-dem",
+        tiles: [orthophotoTerrainTileUrlTemplate(orthophoto)],
+        tileSize: 256,
+        minzoom: terrainMinZoom,
+        maxzoom: terrainMaxZoom,
+        bounds: [orthophoto.boundsWest, orthophoto.boundsSouth, orthophoto.boundsEast, orthophoto.boundsNorth],
+        encoding: "terrarium",
+      });
+      const control = new TerrainControl({ source: TERRAIN_SOURCE_ID, exaggeration: 1 });
+      map.addControl(control, "top-right");
+      terrainControlRef.current = control;
+    }
+  }, [map, orthophoto, terrainOverride]);
+
+  useEffect(() => {
     setOrthophotoId(orthophoto.id);
 
     listMeasurements({ orthophotoId: orthophoto.id })
@@ -287,6 +335,7 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
             onLock={onLock}
             onOpenManager={onOpenManager}
             onOpenLayers={() => setIsLayersPanelOpen(true)}
+            onOpenTerrain={() => setIsTerrainPanelOpen(true)}
           />
         </div>
 
@@ -301,6 +350,16 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
             onClose={() => {
               setIsLayersPanelOpen(false);
               setLayersVersion((v) => v + 1);
+            }}
+          />
+        )}
+
+        {isTerrainPanelOpen && (
+          <OrthophotoTerrainPanel
+            orthophoto={orthophoto}
+            onClose={(updated) => {
+              setIsTerrainPanelOpen(false);
+              if (updated) setTerrainOverride(updated);
             }}
           />
         )}

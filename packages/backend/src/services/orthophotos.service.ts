@@ -18,6 +18,9 @@ interface OrthophotoRow {
   is_published: boolean;
   notes: string | null;
   uploaded_at: string;
+  terrain_path: string | null;
+  terrain_min_zoom: number | null;
+  terrain_max_zoom: number | null;
 }
 
 function mapRow(row: OrthophotoRow): Orthophoto {
@@ -38,6 +41,9 @@ function mapRow(row: OrthophotoRow): Orthophoto {
     isPublished: row.is_published,
     notes: row.notes,
     uploadedAt: row.uploaded_at,
+    terrainPath: row.terrain_path,
+    terrainMinZoom: row.terrain_min_zoom,
+    terrainMaxZoom: row.terrain_max_zoom,
   };
 }
 
@@ -101,6 +107,31 @@ export async function setPublished(id: string, isPublished: boolean): Promise<Or
   return rows[0] ? mapRow(rows[0]) : null;
 }
 
+export interface SetTerrainInput {
+  terrainPath: string;
+  terrainMinZoom: number;
+  terrainMaxZoom: number;
+}
+
+export async function setTerrain(id: string, input: SetTerrainInput): Promise<Orthophoto | null> {
+  const { rows } = await pool.query<OrthophotoRow>(
+    "UPDATE orthophotos SET terrain_path = $2, terrain_min_zoom = $3, terrain_max_zoom = $4 WHERE id = $1 RETURNING *",
+    [id, input.terrainPath, input.terrainMinZoom, input.terrainMaxZoom],
+  );
+  return rows[0] ? mapRow(rows[0]) : null;
+}
+
+export async function clearTerrain(id: string): Promise<{ orthophoto: Orthophoto; removedTerrainPath: string | null } | null> {
+  const current = await getOrthophotoById(id);
+  if (!current) return null;
+
+  const { rows } = await pool.query<OrthophotoRow>(
+    "UPDATE orthophotos SET terrain_path = NULL, terrain_min_zoom = NULL, terrain_max_zoom = NULL WHERE id = $1 RETURNING *",
+    [id],
+  );
+  return rows[0] ? { orthophoto: mapRow(rows[0]), removedTerrainPath: current.terrainPath } : null;
+}
+
 export interface UpdateOrthophotoInput {
   name?: string;
   crsDescription?: string | null;
@@ -125,6 +156,7 @@ export async function updateOrthophoto(id: string, patch: UpdateOrthophotoInput)
 
 export interface DeletedOrthophotoFiles {
   orthophotoFilePath: string;
+  terrainFilePath: string | null;
   photoFilePaths: string[];
 }
 
@@ -146,6 +178,7 @@ export async function deleteOrthophoto(id: string): Promise<DeletedOrthophotoFil
 
   return {
     orthophotoFilePath: orthophoto.filePath,
+    terrainFilePath: orthophoto.terrainPath,
     photoFilePaths: photoRows.map((r) => r.file_path),
   };
 }

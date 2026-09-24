@@ -39,6 +39,10 @@ export interface Orthophoto {
   isPublished: boolean;
   notes: string | null;
   uploadedAt: string;
+  /** Terreno 3D opcional (teselas terrain-RGB/Terrarium) sobre el que se drapea la ortofoto. */
+  terrainPath: string | null;
+  terrainMinZoom: number | null;
+  terrainMaxZoom: number | null;
 }
 
 /** Capa vectorial subida como .kml/.kmz y convertida a GeoJSON, superpuesta sobre una ortofoto. */

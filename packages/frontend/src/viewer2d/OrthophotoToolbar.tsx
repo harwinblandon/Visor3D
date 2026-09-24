@@ -58,9 +58,10 @@ interface OrthophotoToolbarProps {
   onUnlock: (password: string) => Promise<boolean>;
   onLock: () => void;
   onOpenManager: () => void;
+  onOpenLayers: () => void;
 }
 
-export function OrthophotoToolbar({ isAdmin, onUnlock, onLock, onOpenManager }: OrthophotoToolbarProps) {
+export function OrthophotoToolbar({ isAdmin, onUnlock, onLock, onOpenManager, onOpenLayers }: OrthophotoToolbarProps) {
   const activeTool = useOrthophotoStore((s) => s.activeTool);
   const setActiveTool = useOrthophotoStore((s) => s.setActiveTool);
   const pendingPoints = useOrthophotoStore((s) => s.pendingPoints);
@@ -165,6 +166,7 @@ export function OrthophotoToolbar({ isAdmin, onUnlock, onLock, onOpenManager }: 
 
       {isAdmin ? (
         <Dropdown label={isMobile ? "⋮" : "Ortofoto"}>
+          <DropdownItem onClick={onOpenLayers}>Capas KML/KMZ</DropdownItem>
           <DropdownItem onClick={onOpenManager}>Gestionar ortofotos</DropdownItem>
           <DropdownDivider />
           <DropdownItem onClick={onLock}>Cerrar sesión de administrador</DropdownItem>

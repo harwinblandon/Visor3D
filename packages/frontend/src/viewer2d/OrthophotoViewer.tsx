@@ -21,6 +21,7 @@ import { CircleTool } from "./interactions/CircleTool";
 import { AnnotationTool } from "./interactions/AnnotationTool";
 import { EditableVertices } from "./interactions/EditableVertices";
 import { KmlLayers } from "./interactions/KmlLayers";
+import { OrthophotoLayersPanel } from "./OrthophotoLayersPanel";
 import {
   SATELLITE_TILES,
   SATELLITE_ATTRIBUTION,
@@ -57,6 +58,8 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
   const isMobile = useIsMobile();
 
   const [cursorCoords, setCursorCoords] = useState<LngLat | null>(null);
+  const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
+  const [layersVersion, setLayersVersion] = useState(0);
 
   const setOrthophotoId = useOrthophotoStore((s) => s.setOrthophotoId);
   const setAnnotations = useOrthophotoStore((s) => s.setAnnotations);
@@ -278,12 +281,29 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
               {orthophoto.name}
             </span>
           </div>
-          <OrthophotoToolbar isAdmin={isAdmin} onUnlock={onUnlock} onLock={onLock} onOpenManager={onOpenManager} />
+          <OrthophotoToolbar
+            isAdmin={isAdmin}
+            onUnlock={onUnlock}
+            onLock={onLock}
+            onOpenManager={onOpenManager}
+            onOpenLayers={() => setIsLayersPanelOpen(true)}
+          />
         </div>
 
         <MeasurementList2D />
         <AnnotationDetail2D />
         <AnnotationForm2D />
+
+        {isLayersPanelOpen && (
+          <OrthophotoLayersPanel
+            orthophotoId={orthophoto.id}
+            orthophotoName={orthophoto.name}
+            onClose={() => {
+              setIsLayersPanelOpen(false);
+              setLayersVersion((v) => v + 1);
+            }}
+          />
+        )}
 
         {!loaded && (
           <div
@@ -328,7 +348,7 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
           </div>
         )}
 
-        <KmlLayers />
+        <KmlLayers key={layersVersion} />
         <MeasureDistanceTool />
         <MeasureAreaTool />
         <PolylineTool />

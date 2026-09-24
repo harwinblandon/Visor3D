@@ -131,7 +131,7 @@ function OrthophotoEditForm({ orthophoto, onCancel, onSaved }: OrthophotoEditFor
   );
 }
 
-function LayersSection({ orthophotoId }: { orthophotoId: string }) {
+export function LayersSection({ orthophotoId }: { orthophotoId: string }) {
   const [layers, setLayers] = useState<OrthophotoLayer[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);

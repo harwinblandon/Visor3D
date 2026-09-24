@@ -92,12 +92,23 @@ export function orthophotoShareUrl(orthophoto: Orthophoto): string {
   return `${window.location.origin}/o/${orthophoto.id}`;
 }
 
+function fileVersion(filePath: string | null): string {
+  if (!filePath) return "";
+  return encodeURIComponent(filePath.split("/").pop() ?? "");
+}
+
+// Las teselas se sirven con cache "immutable" de un año (son inmutables PARA UN MISMO
+// archivo), pero la URL de tesela es siempre la misma z/x/y sin importar qué archivo hay
+// detrás -- si se reemplaza la ortofoto o el terreno (mismo id, archivo nuevo), el navegador
+// seguiria sirviendo para siempre las teselas viejas cacheadas bajo esa misma URL. Se agrega
+// el nombre del archivo actual como parametro de version para que un reemplazo cambie la URL
+// y fuerce una descarga nueva.
 export function orthophotoTileUrlTemplate(orthophoto: Orthophoto): string {
-  return `${window.location.origin}/api/orthophotos/${orthophoto.id}/tiles/{z}/{x}/{y}`;
+  return `${window.location.origin}/api/orthophotos/${orthophoto.id}/tiles/{z}/{x}/{y}?v=${fileVersion(orthophoto.filePath)}`;
 }
 
 export function orthophotoTerrainTileUrlTemplate(orthophoto: Orthophoto): string {
-  return `${window.location.origin}/api/orthophotos/${orthophoto.id}/terrain-tiles/{z}/{x}/{y}`;
+  return `${window.location.origin}/api/orthophotos/${orthophoto.id}/terrain-tiles/{z}/{x}/{y}?v=${fileVersion(orthophoto.terrainPath)}`;
 }
 
 export function uploadOrthophotoTerrain(id: string, file: File, minZoom: number, maxZoom: number): Promise<Orthophoto> {

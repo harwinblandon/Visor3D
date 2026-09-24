@@ -39,6 +39,12 @@ export async function parseKmlOrKmz(buffer: Buffer, originalFilename: string): P
     kmlText = buffer.toString("utf-8");
   }
 
+  // Muchos exportadores (Google Earth, QGIS, Civil3D en Windows) anteponen un BOM UTF-8;
+  // eso deja un caracter invisible antes de "<?xml ...?>" y el parser lo rechaza porque
+  // ya no ve la declaracion XML al inicio literal del documento. trim() lo quita (U+FEFF
+  // cuenta como whitespace para el motor de JS) junto con cualquier salto de linea previo.
+  kmlText = kmlText.trim();
+
   const dom = new DOMParser().parseFromString(kmlText, "text/xml");
   const geojson = kml(dom as unknown as Document, { skipNullGeometry: true }) as FeatureCollection;
   if (!geojson.features || geojson.features.length === 0) {

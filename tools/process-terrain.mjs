@@ -14,10 +14,14 @@
 // Requiere Docker corriendo localmente. No sube nada: solo genera el .mbtiles, que
 // despues se sube desde el panel "Ortofoto" > "Terreno 3D" del visor.
 //
-// Nota tecnica: el area fuera de la huella real del DEM (las esquinas del rectangulo que
-// quedan fuera del area realmente sobrevolada) decodifica a una elevacion de referencia de
-// 0 m en vez de quedar "vacia" -- en la practica no se nota porque esas mismas esquinas ya
-// quedan transparentes en la ortofoto que se dibuja encima.
+// Nota tecnica: la elevacion se guarda RELATIVA al punto mas bajo real del predio (no
+// absoluta sobre el nivel del mar) -- si no, MapLibre posiciona la camara asumiendo que
+// el suelo esta a 0 m, y con un DEM real (p.ej. ~1250 m sobre el mar) la camara queda
+// flotando esa altura por encima de donde estaba antes de activar el terreno. El area
+// fuera de la huella real del DEM (las esquinas del rectangulo que quedan fuera del area
+// realmente sobrevolada) decodifica a ese mismo punto mas bajo en vez de quedar "vacia" --
+// en la practica casi no se nota porque esas mismas esquinas ya quedan transparentes en
+// la ortofoto que se dibuja encima.
 
 import { execFileSync } from "node:child_process";
 import { existsSync, statSync, unlinkSync } from "node:fs";
@@ -83,11 +87,33 @@ async function main() {
     [outDir, "/out"],
   ];
 
+  // MapLibre posiciona la camara asumiendo que el "suelo" esta a 0 m salvo que el terreno
+  // le diga lo contrario. Un DEM real trae la elevacion absoluta sobre el nivel del mar
+  // (aqui, ~1234-1273 m), asi que al activar el terreno la camara queda flotando a esa
+  // altura por encima de donde estaba antes -- se ve como si "se disparara" muchos metros
+  // hacia arriba. Se resta la elevacion minima real del predio para que el relieve quede
+  // relativo al propio terreno (0 m = el punto mas bajo) en vez de absoluto sobre el mar.
+  const statsJson = runDocker(mounts, ["gdalinfo", "-stats", "-json", `/in/${inName}`]);
+  const statsInfo = JSON.parse(statsJson);
+  const baseElevation = Math.floor(Number(statsInfo.bands[0].metadata[""].STATISTICS_MINIMUM));
+  console.log(`Elevación mínima real: ${baseElevation} m — se resta para que el relieve sea relativo al predio.`);
+
   console.log("Reproyectando a Web Mercator (EPSG:3857) para medir la resolución real...");
-  // -dstnodata 0: si el DEM trae huecos (zonas sin dato, comunes en los bordes del vuelo),
-  // que decodifiquen a elevacion 0 en vez de arrastrar el valor de nodata original (p.ej.
-  // -32767), que codificaria como una elevacion absurda en vez de "sin dato".
-  runDocker(mounts, ["gdalwarp", "-t_srs", "EPSG:3857", "-r", "bilinear", "-dstnodata", "0", `/in/${inName}`, `/out/${tmpProbeName}`]);
+  // -dstnodata {baseElevation}: si el DEM trae huecos (zonas sin dato, comunes en los
+  // bordes del vuelo), que decodifiquen al punto mas bajo real del predio (queda a ras del
+  // resto del relieve) en vez de arrastrar el valor de nodata original (p.ej. -32767), que
+  // codificaria como una elevacion absurda en vez de "sin dato".
+  runDocker(mounts, [
+    "gdalwarp",
+    "-t_srs",
+    "EPSG:3857",
+    "-r",
+    "bilinear",
+    "-dstnodata",
+    String(baseElevation),
+    `/in/${inName}`,
+    `/out/${tmpProbeName}`,
+  ]);
 
   const infoJson = runDocker(mounts, ["gdalinfo", "-json", `/out/${tmpProbeName}`]);
   const info = JSON.parse(infoJson);
@@ -114,7 +140,7 @@ async function main() {
     String(exactRes),
     String(exactRes),
     "-dstnodata",
-    "0",
+    String(baseElevation),
     "-overwrite",
     `/in/${inName}`,
     `/out/${tmpExactName}`,
@@ -127,6 +153,7 @@ async function main() {
   runDocker(mounts, ["gdal_edit.py", "-unsetnodata", `/out/${tmpExactName}`]);
 
   console.log("Codificando la elevación en RGB (Terrarium)...");
+  const shiftedOffset = ELEVATION_OFFSET - baseElevation;
   runDocker(mounts, [
     "gdal_calc.py",
     "-A",
@@ -134,7 +161,7 @@ async function main() {
     `--outfile=/out/${tmpRName}`,
     "--type=Byte",
     "--overwrite",
-    `--calc=(A + ${ELEVATION_OFFSET}) // 256 % 256`,
+    `--calc=(A + ${shiftedOffset}) // 256 % 256`,
   ]);
   runDocker(mounts, [
     "gdal_calc.py",
@@ -143,7 +170,7 @@ async function main() {
     `--outfile=/out/${tmpGName}`,
     "--type=Byte",
     "--overwrite",
-    `--calc=(A + ${ELEVATION_OFFSET}) // 1 % 256`,
+    `--calc=(A + ${shiftedOffset}) // 1 % 256`,
   ]);
   runDocker(mounts, [
     "gdal_calc.py",
@@ -152,7 +179,7 @@ async function main() {
     `--outfile=/out/${tmpBName}`,
     "--type=Byte",
     "--overwrite",
-    `--calc=((A + ${ELEVATION_OFFSET}) % 1) * 256 // 1`,
+    `--calc=((A + ${shiftedOffset}) % 1) * 256 // 1`,
   ]);
 
   runDocker(mounts, [

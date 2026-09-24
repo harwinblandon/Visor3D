@@ -26,3 +26,45 @@ body,
   background: #2a2f36;
   border-radius: 4px;
 }
+
+/* Controles de MapLibre (brujula/norte, geolocalizacion, terreno 3D): por defecto quedan
+   chicos y pegados arriba, tapados por el encabezado fijo del visor de ortofotos. Se bajan
+   debajo del encabezado, se agrandan y se les da la misma estetica oscura del resto de la
+   app en vez del blanco por defecto de MapLibre. */
+.maplibregl-ctrl-top-right {
+  top: 86px !important;
+}
+
+@media (max-width: 768px) {
+  .maplibregl-ctrl-top-right {
+    top: 66px !important;
+  }
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group {
+  background: #181b1f !important;
+  border: 1px solid #2a2f36 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+  overflow: hidden;
+  margin-bottom: 10px !important;
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button {
+  width: 42px !important;
+  height: 42px !important;
+  filter: invert(1) brightness(1.35);
+  transition: background-color 0.12s ease;
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button + button {
+  border-top: 1px solid #2a2f36 !important;
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button:disabled {
+  opacity: 0.35;
+}

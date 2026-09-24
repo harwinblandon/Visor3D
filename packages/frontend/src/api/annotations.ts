@@ -1,5 +1,6 @@
 import type { Annotation, DamageType, Severity, AnnotationStatus, Point3D } from "@visor3d/shared";
 import { apiFetch } from "./client";
+import { getStoredAdminKey } from "./auth";
 
 export interface CreateAnnotationInput {
   modelId?: string;
@@ -48,11 +49,20 @@ export function deleteAnnotation(id: string): Promise<void> {
 export function uploadAnnotationPhotos(annotationId: string, files: File[]) {
   const formData = new FormData();
   for (const file of files) formData.append("files", file);
-  return apiFetch(`/api/annotations/${annotationId}/photos`, { method: "POST", body: formData });
+  const adminKey = getStoredAdminKey();
+  return apiFetch(`/api/annotations/${annotationId}/photos`, {
+    method: "POST",
+    body: formData,
+    headers: adminKey ? { "x-admin-key": adminKey } : undefined,
+  });
 }
 
 export function deleteAnnotationPhoto(annotationId: string, photoId: string): Promise<void> {
-  return apiFetch<void>(`/api/annotations/${annotationId}/photos/${photoId}`, { method: "DELETE" });
+  const adminKey = getStoredAdminKey();
+  return apiFetch<void>(`/api/annotations/${annotationId}/photos/${photoId}`, {
+    method: "DELETE",
+    headers: adminKey ? { "x-admin-key": adminKey } : undefined,
+  });
 }
 
 export function photoUrl(filePath: string): string {

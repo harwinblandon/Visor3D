@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { DamageType, Severity } from "@visor3d/shared";
 import { useOrthophotoStore } from "../state/orthophotoStore";
 import { createAnnotation, uploadAnnotationPhotos } from "../api/annotations";
+import { getStoredAdminKey } from "../api/auth";
 import { theme } from "../styles/theme";
 
 const CATEGORY_SUGGESTIONS = [
@@ -190,16 +191,18 @@ export function AnnotationForm2D() {
           </label>
         </div>
 
-        <label style={labelStyle}>
-          Fotos (opcional)
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-            style={{ display: "block", marginTop: 4, color: theme.color.text, fontSize: 12 }}
-          />
-        </label>
+        {!!getStoredAdminKey() && (
+          <label style={labelStyle}>
+            Fotos (opcional)
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+              style={{ display: "block", marginTop: 4, color: theme.color.text, fontSize: 12 }}
+            />
+          </label>
+        )}
 
         {error && <p style={{ color: theme.color.danger, fontSize: 12, margin: 0 }}>{error}</p>}
 

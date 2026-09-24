@@ -120,6 +120,12 @@ async function main() {
     `/out/${tmpExactName}`,
   ]);
 
+  // gdal_calc.py enmascara los pixeles marcados como NoData (los que -dstnodata dejo en
+  // 0 arriba) y en vez de hacer la aritmetica normal sobre ese 0, rellena la salida con un
+  // valor "por defecto" que termina decodificando como una elevacion absurda (~32768 m).
+  // Se quita la etiqueta de NoData para que los trate como numeros comunes.
+  runDocker(mounts, ["gdal_edit.py", "-unsetnodata", `/out/${tmpExactName}`]);
+
   console.log("Codificando la elevación en RGB (Terrarium)...");
   runDocker(mounts, [
     "gdal_calc.py",

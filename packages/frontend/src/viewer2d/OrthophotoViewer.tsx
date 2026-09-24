@@ -330,6 +330,7 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
             </span>
           </div>
           <OrthophotoToolbar
+            orthophotoId={orthophoto.id}
             isAdmin={isAdmin}
             onUnlock={onUnlock}
             onLock={onLock}

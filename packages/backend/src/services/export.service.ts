@@ -1,4 +1,5 @@
 import Drawing from "dxf-writer";
+import proj4 from "proj4";
 import type { Measurement, Annotation, Point3D } from "@visor3d/shared";
 import { circleFromPoints, circlePolygon } from "@visor3d/shared";
 
@@ -35,6 +36,27 @@ function featurePoints(m: Measurement): Array<[number, number, number]> {
     return [...pts, pts[0]];
   }
   return pts;
+}
+
+/**
+ * Reproyecta mediciones en coordenadas geográficas (lng/lat, como las de una ortofoto)
+ * a UTM (metros) centrado en la huso que corresponde al punto medio de la ortofoto, para
+ * que el DXF resultante sea usable directamente en un CAD (AutoCAD/Civil3D) en vez de
+ * quedar en grados, que no son una unidad métrica ni están a escala real.
+ */
+export function projectMeasurementsToUTM(measurements: Measurement[], centerLon: number, centerLat: number): Measurement[] {
+  const zone = Math.floor((centerLon + 180) / 6) + 1;
+  const hemisphere = centerLat >= 0 ? "" : " +south";
+  const utmProjection = `+proj=utm +zone=${zone}${hemisphere} +datum=WGS84 +units=m +no_defs`;
+  const project = proj4("EPSG:4326", utmProjection);
+
+  return measurements.map((m) => ({
+    ...m,
+    points: m.points.map((p) => {
+      const [x, y] = project.forward([p.x, p.y]);
+      return { x, y, z: p.z };
+    }),
+  }));
 }
 
 export function buildDXF(measurements: Measurement[]): string {

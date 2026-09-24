@@ -3,6 +3,7 @@ import { uploadOrthophoto as uploadOrthophotoMiddleware, uploadOrthophotoLayer }
 import { requireAdmin } from "../middleware/auth.js";
 import * as controller from "../controllers/orthophotos.controller.js";
 import * as layersController from "../controllers/orthophotoLayers.controller.js";
+import { exportOrthophoto } from "../controllers/export.controller.js";
 
 export const orthophotosRouter = Router();
 
@@ -10,6 +11,7 @@ orthophotosRouter.post("/", requireAdmin, uploadOrthophotoMiddleware.single("fil
 orthophotosRouter.get("/", requireAdmin, controller.listOrthophotos);
 orthophotosRouter.get("/:id", controller.getOrthophotoById);
 orthophotosRouter.get("/:id/tiles/:z/:x/:y", controller.getTile);
+orthophotosRouter.get("/:id/export", exportOrthophoto);
 orthophotosRouter.patch("/:id", requireAdmin, controller.updateOrthophoto);
 orthophotosRouter.patch("/:id/publish", requireAdmin, controller.setPublished);
 orthophotosRouter.delete("/:id", requireAdmin, controller.deleteOrthophoto);

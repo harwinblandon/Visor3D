@@ -114,6 +114,10 @@ export function uploadOrthophotoTerrain(id: string, file: File, minZoom: number,
   });
 }
 
+export function exportOrthophotoUrl(orthophotoId: string, format: "dxf" | "geojson"): string {
+  return `/api/orthophotos/${orthophotoId}/export?format=${format}`;
+}
+
 export function deleteOrthophotoTerrain(id: string): Promise<Orthophoto> {
   const adminKey = getStoredAdminKey();
   return apiFetch<Orthophoto>(`/api/orthophotos/${id}/terrain`, {

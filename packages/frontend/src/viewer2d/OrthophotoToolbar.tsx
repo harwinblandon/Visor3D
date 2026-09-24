@@ -1,7 +1,8 @@
 import { useOrthophotoStore, type ActiveTool2D, type BasemapId } from "../state/orthophotoStore";
 import { finalizeAreaPolygon } from "./interactions/MeasureAreaTool";
 import { finalizePolyline } from "./interactions/PolylineTool";
-import { Dropdown, DropdownItem, DropdownDivider } from "../components/Dropdown";
+import { exportOrthophotoUrl } from "../api/orthophotos";
+import { Dropdown, DropdownItem, DropdownLinkItem, DropdownDivider } from "../components/Dropdown";
 import { AdminUnlockMenu } from "../components/Toolbar";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { theme } from "../styles/theme";
@@ -54,6 +55,7 @@ function FinishButton({ color, onClick, compact, children }: { color: string; on
 }
 
 interface OrthophotoToolbarProps {
+  orthophotoId: string;
   isAdmin: boolean;
   onUnlock: (password: string) => Promise<boolean>;
   onLock: () => void;
@@ -62,7 +64,7 @@ interface OrthophotoToolbarProps {
   onOpenTerrain: () => void;
 }
 
-export function OrthophotoToolbar({ isAdmin, onUnlock, onLock, onOpenManager, onOpenLayers, onOpenTerrain }: OrthophotoToolbarProps) {
+export function OrthophotoToolbar({ orthophotoId, isAdmin, onUnlock, onLock, onOpenManager, onOpenLayers, onOpenTerrain }: OrthophotoToolbarProps) {
   const activeTool = useOrthophotoStore((s) => s.activeTool);
   const setActiveTool = useOrthophotoStore((s) => s.setActiveTool);
   const pendingPoints = useOrthophotoStore((s) => s.pendingPoints);
@@ -156,6 +158,11 @@ export function OrthophotoToolbar({ isAdmin, onUnlock, onLock, onOpenManager, on
           )}
         </>
       )}
+
+      <Dropdown label={isMobile ? "⭳" : "Exportar"}>
+        <DropdownLinkItem href={exportOrthophotoUrl(orthophotoId, "dxf")}>Vectores — DXF</DropdownLinkItem>
+        <DropdownLinkItem href={exportOrthophotoUrl(orthophotoId, "geojson")}>Vectores — GeoJSON</DropdownLinkItem>
+      </Dropdown>
 
       <Dropdown label={isMobile ? "🗺" : `Mapa base: ${BASEMAP_LABELS[basemap]}`}>
         {(Object.keys(BASEMAP_LABELS) as BasemapId[]).map((b) => (

@@ -84,7 +84,10 @@ async function main() {
   ];
 
   console.log("Reproyectando a Web Mercator (EPSG:3857) para medir la resolución real...");
-  runDocker(mounts, ["gdalwarp", "-t_srs", "EPSG:3857", "-r", "bilinear", `/in/${inName}`, `/out/${tmpProbeName}`]);
+  // -dstnodata 0: si el DEM trae huecos (zonas sin dato, comunes en los bordes del vuelo),
+  // que decodifiquen a elevacion 0 en vez de arrastrar el valor de nodata original (p.ej.
+  // -32767), que codificaria como una elevacion absurda en vez de "sin dato".
+  runDocker(mounts, ["gdalwarp", "-t_srs", "EPSG:3857", "-r", "bilinear", "-dstnodata", "0", `/in/${inName}`, `/out/${tmpProbeName}`]);
 
   const infoJson = runDocker(mounts, ["gdalinfo", "-json", `/out/${tmpProbeName}`]);
   const info = JSON.parse(infoJson);
@@ -110,6 +113,8 @@ async function main() {
     "-tr",
     String(exactRes),
     String(exactRes),
+    "-dstnodata",
+    "0",
     "-overwrite",
     `/in/${inName}`,
     `/out/${tmpExactName}`,

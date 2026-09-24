@@ -96,7 +96,7 @@ interface OrthophotoState {
 
 export const useOrthophotoStore = create<OrthophotoState>((set) => ({
   orthophotoId: null,
-  basemap: "none",
+  basemap: "hybrid",
   activeTool: "none",
   pendingPoints: [],
   distanceMeasurements: [],

@@ -6,6 +6,10 @@ build/
 # Modelos 3D: son datos de usuario/runtime, nunca se versionan (pesan demasiado)
 *.glb
 
+# GeoTIFFs/DEMs de entrada y carpetas de datos del usuario (ortofotos, modelos) fuera de uploads/
+/TIFF/
+/Modelos/
+
 packages/backend/uploads/**
 !packages/backend/uploads/models/
 !packages/backend/uploads/models/.gitkeep

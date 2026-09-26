@@ -174,7 +174,7 @@ export function OrthophotoToolbar({ orthophotoId, isAdmin, onUnlock, onLock, onO
 
       {isAdmin ? (
         <Dropdown label={isMobile ? "⋮" : "Ortofoto"}>
-          <DropdownItem onClick={onOpenLayers}>Capas KML/KMZ</DropdownItem>
+          <DropdownItem onClick={onOpenLayers}>Capas KML/KMZ/SHP</DropdownItem>
           <DropdownItem onClick={onOpenTerrain}>Terreno 3D</DropdownItem>
           <DropdownItem onClick={onOpenManager}>Gestionar ortofotos</DropdownItem>
           <DropdownDivider />

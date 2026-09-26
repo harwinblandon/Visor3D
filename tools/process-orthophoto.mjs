@@ -5,12 +5,16 @@
 // instalar GDAL en la maquina local).
 //
 // Uso:
-//   node tools/process-orthophoto.mjs <entrada.tif> <salida.mbtiles> [minZoomOffset] [formato]
+//   node tools/process-orthophoto.mjs <entrada.tif> <salida.mbtiles> [minZoomOffset] [formato] [maxZoomCap]
 //
 //   minZoomOffset: cuantos niveles de zoom generar por debajo del maximo (default 6).
 //                  Mas niveles = mejor experiencia al alejar el mapa, pero mas peso.
 //   formato: PNG (por defecto, admite bordes transparentes en mosaicos irregulares)
 //            o JPEG (mas liviano, sin transparencia — solo si el mosaico es rectangular).
+//   maxZoomCap: limita el zoom maximo (por defecto, el detectado segun la resolucion real
+//               del archivo, hasta 22). El grueso del peso final sale del nivel de zoom
+//               maximo, asi que bajarlo 1-2 niveles reduce el archivo varias veces sin
+//               perder la utilidad practica para ver el predio en el navegador.
 //
 // Requiere Docker corriendo localmente. No sube nada: solo genera el .mbtiles, que
 // despues se sube al visor por la API/panel de administracion.
@@ -40,7 +44,7 @@ function formatBytes(bytes) {
 }
 
 async function main() {
-  const [, , inputArg, outputArg, minZoomOffsetArg, formatArg] = process.argv;
+  const [, , inputArg, outputArg, minZoomOffsetArg, formatArg, maxZoomCapArg] = process.argv;
   if (!inputArg || !outputArg) {
     console.error(
       "Uso: node tools/process-orthophoto.mjs <entrada.tif> <salida.mbtiles> [minZoomOffset=6] [PNG|JPEG]",
@@ -57,6 +61,7 @@ async function main() {
 
   const minZoomOffset = minZoomOffsetArg ? Number(minZoomOffsetArg) : 6;
   const tileFormat = (formatArg || "PNG").toUpperCase();
+  const maxZoomCap = maxZoomCapArg ? Number(maxZoomCapArg) : null;
 
   const inputAbs = path.resolve(inputArg);
   const outputAbs = path.resolve(outputArg);
@@ -91,11 +96,15 @@ async function main() {
   const info = JSON.parse(infoJson);
   const pixelSize = Math.abs(info.geoTransform[1]);
 
-  const maxZoom = Math.min(22, Math.max(0, Math.round(Math.log2(WEB_MERCATOR_ORIGIN_RES / pixelSize))));
+  const detectedMaxZoom = Math.min(22, Math.max(0, Math.round(Math.log2(WEB_MERCATOR_ORIGIN_RES / pixelSize))));
+  const maxZoom = maxZoomCap ? Math.min(detectedMaxZoom, maxZoomCap) : detectedMaxZoom;
   const minZoomRequested = Math.max(maxZoom - minZoomOffset, 0);
   const exactRes = WEB_MERCATOR_ORIGIN_RES / 2 ** maxZoom;
 
-  console.log(`Resolución detectada: ${pixelSize.toFixed(3)} m/px → zoom máximo ${maxZoom}`);
+  console.log(`Resolución detectada: ${pixelSize.toFixed(3)} m/px → zoom máximo ${detectedMaxZoom}`);
+  if (maxZoomCap && maxZoom < detectedMaxZoom) {
+    console.log(`Zoom máximo limitado a ${maxZoom} (${(WEB_MERCATOR_ORIGIN_RES / 2 ** maxZoom).toFixed(3)} m/px) por maxZoomCap.`);
+  }
   console.log(`Generando .mbtiles (zoom ${minZoomRequested}-${maxZoom}, formato ${tileFormat})...`);
 
   const outputName = outName.endsWith(".mbtiles") ? outName : `${outName}.mbtiles`;

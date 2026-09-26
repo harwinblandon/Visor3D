@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tmcw/togeojson": "^7.1.2",
+    "@types/shapefile": "^0.6.4",
     "@visor3d/shared": "*",
     "@xmldom/xmldom": "^0.9.12",
     "better-sqlite3": "^12.11.1",
@@ -21,7 +22,8 @@
     "jszip": "^3.10.2",
     "multer": "^2.0.1",
     "pg": "^8.12.0",
-    "proj4": "^2.22.0"
+    "proj4": "^2.22.0",
+    "shapefile": "^0.6.6"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",

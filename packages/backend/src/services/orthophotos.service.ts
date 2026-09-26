@@ -107,6 +107,44 @@ export async function setPublished(id: string, isPublished: boolean): Promise<Or
   return rows[0] ? mapRow(rows[0]) : null;
 }
 
+export interface ReplaceFileInput {
+  filename: string;
+  originalFilename: string | null;
+  filePath: string;
+  fileSizeBytes: number | null;
+  boundsWest: number;
+  boundsSouth: number;
+  boundsEast: number;
+  boundsNorth: number;
+  minZoom: number;
+  maxZoom: number;
+}
+
+export async function replaceFile(id: string, input: ReplaceFileInput): Promise<Orthophoto | null> {
+  const { rows } = await pool.query<OrthophotoRow>(
+    `UPDATE orthophotos
+       SET filename = $2, original_filename = $3, file_path = $4, file_size_bytes = $5,
+           bounds_west = $6, bounds_south = $7, bounds_east = $8, bounds_north = $9,
+           min_zoom = $10, max_zoom = $11
+     WHERE id = $1
+     RETURNING *`,
+    [
+      id,
+      input.filename,
+      input.originalFilename,
+      input.filePath,
+      input.fileSizeBytes,
+      input.boundsWest,
+      input.boundsSouth,
+      input.boundsEast,
+      input.boundsNorth,
+      input.minZoom,
+      input.maxZoom,
+    ],
+  );
+  return rows[0] ? mapRow(rows[0]) : null;
+}
+
 export interface SetTerrainInput {
   terrainPath: string;
   terrainMinZoom: number;

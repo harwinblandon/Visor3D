@@ -15,14 +15,37 @@ import { theme } from "../../styles/theme";
 
 const PALETTE = [theme.color.accent, "#f59e0b", "#34d399", "#f472b6", "#a78bfa", "#60a5fa"];
 
+function escapeHtml(value: unknown): string {
+  return String(value).replace(/</g, "&lt;");
+}
+
+// El KML trae campos fijos name/description (los que ya mapea togeojson); un shapefile en
+// cambio trae sus propios atributos con nombres arbitrarios (ID de predio, area,
+// propietario...) desde su .dbf. Si no hay name/description se listan todos los atributos
+// como tabla, para que un shapefile no quede mudo en el popup.
 function popupHtml(properties: Record<string, unknown> | null): string {
-  const name = (properties?.name as string | undefined) ?? "Sin nombre";
+  const name = properties?.name as string | undefined;
   const description = properties?.description as string | undefined;
-  const safeName = String(name).replace(/</g, "&lt;");
-  const safeDesc = description ? String(description).replace(/</g, "&lt;") : "";
-  return `<div style="font-family:${theme.font};font-size:12px;max-width:220px;">
-    <div style="font-weight:600;margin-bottom:4px;">${safeName}</div>
-    ${safeDesc ? `<div style="color:#8b95a1;">${safeDesc}</div>` : ""}
+
+  if (name || description) {
+    return `<div style="font-family:${theme.font};font-size:12px;max-width:220px;">
+      <div style="font-weight:600;margin-bottom:4px;">${escapeHtml(name ?? "Sin nombre")}</div>
+      ${description ? `<div style="color:#8b95a1;">${escapeHtml(description)}</div>` : ""}
+    </div>`;
+  }
+
+  const entries = Object.entries(properties ?? {}).filter(([, v]) => v !== null && v !== undefined && v !== "");
+  if (entries.length === 0) {
+    return `<div style="font-family:${theme.font};font-size:12px;">Sin atributos</div>`;
+  }
+  const rows = entries
+    .map(
+      ([key, value]) =>
+        `<tr><td style="color:#8b95a1;padding-right:8px;vertical-align:top;">${escapeHtml(key)}</td><td>${escapeHtml(value)}</td></tr>`,
+    )
+    .join("");
+  return `<div style="font-family:${theme.font};font-size:12px;max-width:260px;">
+    <table style="border-collapse:collapse;">${rows}</table>
   </div>`;
 }
 

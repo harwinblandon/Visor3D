@@ -12,6 +12,7 @@ orthophotosRouter.get("/", requireAdmin, controller.listOrthophotos);
 orthophotosRouter.get("/:id", controller.getOrthophotoById);
 orthophotosRouter.get("/:id/tiles/:z/:x/:y", controller.getTile);
 orthophotosRouter.get("/:id/export", exportOrthophoto);
+orthophotosRouter.post("/:id/file", requireAdmin, uploadOrthophotoMiddleware.single("file"), controller.replaceFile);
 orthophotosRouter.patch("/:id", requireAdmin, controller.updateOrthophoto);
 orthophotosRouter.patch("/:id/publish", requireAdmin, controller.setPublished);
 orthophotosRouter.delete("/:id", requireAdmin, controller.deleteOrthophoto);

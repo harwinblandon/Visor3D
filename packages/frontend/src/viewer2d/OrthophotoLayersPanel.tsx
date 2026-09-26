@@ -40,7 +40,7 @@ export function OrthophotoLayersPanel({ orthophotoId, orthophotoName, onClose }:
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ color: theme.color.text, margin: 0, fontSize: 15, fontWeight: 600 }}>Capas KML/KMZ</h3>
+          <h3 style={{ color: theme.color.text, margin: 0, fontSize: 15, fontWeight: 600 }}>Capas KML/KMZ/Shapefile</h3>
           <button
             type="button"
             onClick={onClose}
@@ -51,9 +51,10 @@ export function OrthophotoLayersPanel({ orthophotoId, orthophotoName, onClose }:
         </div>
 
         <p style={{ color: theme.color.textMuted, fontSize: 11, margin: 0 }}>
-          Sube un .kml o .kmz (los KMZ se descomprimen automáticamente) con resultados —
-          linderos, puntos, polígonos — para superponerlos sobre <strong>{orthophotoName}</strong>.
-          Al hacer clic sobre una figura se muestra su nombre y descripción.
+          Sube un .kml, .kmz, o un shapefile comprimido en .zip (.shp + .dbf + .shx, con su
+          .prj si no está en WGS84) con resultados — linderos, puntos, polígonos — para
+          superponerlos sobre <strong>{orthophotoName}</strong>. Al hacer clic sobre una figura
+          se muestra su nombre y descripción (o sus atributos, en el caso de un shapefile).
         </p>
 
         <LayersSection orthophotoId={orthophotoId} />

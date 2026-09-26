@@ -56,6 +56,34 @@ export interface UpdateOrthophotoInput {
   notes?: string | null;
 }
 
+export interface ReplaceOrthophotoFileInput {
+  file: File;
+  boundsWest: number;
+  boundsSouth: number;
+  boundsEast: number;
+  boundsNorth: number;
+  minZoom: number;
+  maxZoom: number;
+}
+
+export function replaceOrthophotoFile(id: string, input: ReplaceOrthophotoFileInput): Promise<Orthophoto> {
+  const formData = new FormData();
+  formData.append("file", input.file);
+  formData.append("boundsWest", String(input.boundsWest));
+  formData.append("boundsSouth", String(input.boundsSouth));
+  formData.append("boundsEast", String(input.boundsEast));
+  formData.append("boundsNorth", String(input.boundsNorth));
+  formData.append("minZoom", String(input.minZoom));
+  formData.append("maxZoom", String(input.maxZoom));
+
+  const adminKey = getStoredAdminKey();
+  return apiFetch<Orthophoto>(`/api/orthophotos/${id}/file`, {
+    method: "POST",
+    body: formData,
+    headers: adminKey ? { "x-admin-key": adminKey } : undefined,
+  });
+}
+
 export function updateOrthophoto(id: string, patch: UpdateOrthophotoInput): Promise<Orthophoto> {
   const adminKey = getStoredAdminKey();
   return apiFetch<Orthophoto>(`/api/orthophotos/${id}`, {

@@ -7,19 +7,22 @@ export async function uploadLayer(req: Request, res: Response, next: NextFunctio
   try {
     const file = req.file;
     if (!file) {
-      return res.status(400).json({ error: "Falta el archivo .kml/.kmz (campo 'file')" });
+      return res.status(400).json({ error: "Falta el archivo .kml/.kmz/.zip (campo 'file')" });
     }
     const orthophotoId = req.params.id;
     const orthophoto = await orthophotosService.getOrthophotoById(orthophotoId);
     if (!orthophoto) return res.status(404).json({ error: "Ortofoto no encontrada" });
 
-    const name = (req.body.name as string | undefined)?.trim() || file.originalname.replace(/\.(kml|kmz)$/i, "");
+    const isShapefile = /\.(zip|shp)$/i.test(file.originalname);
+    const name = (req.body.name as string | undefined)?.trim() || file.originalname.replace(/\.(kml|kmz|zip|shp)$/i, "");
 
     let geojson;
     try {
-      geojson = await layersService.parseKmlOrKmz(file.buffer, file.originalname);
+      geojson = isShapefile
+        ? await layersService.parseShapefile(file.buffer, file.originalname)
+        : await layersService.parseKmlOrKmz(file.buffer, file.originalname);
     } catch (err) {
-      return res.status(400).json({ error: err instanceof Error ? err.message : "No se pudo leer el archivo KML/KMZ" });
+      return res.status(400).json({ error: err instanceof Error ? err.message : "No se pudo leer el archivo" });
     }
 
     const layer = await layersService.createLayer({

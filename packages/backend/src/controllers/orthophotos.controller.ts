@@ -63,6 +63,54 @@ export async function uploadOrthophoto(req: Request, res: Response, next: NextFu
   }
 }
 
+export async function replaceFile(req: Request, res: Response, next: NextFunction) {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: "Falta el archivo .mbtiles (campo 'file')" });
+    }
+    const { boundsWest, boundsSouth, boundsEast, boundsNorth, minZoom, maxZoom } = req.body;
+    if (
+      boundsWest === undefined ||
+      boundsSouth === undefined ||
+      boundsEast === undefined ||
+      boundsNorth === undefined ||
+      minZoom === undefined ||
+      maxZoom === undefined
+    ) {
+      await safeUnlink(`orthophotos/${file.filename}`);
+      return res
+        .status(400)
+        .json({ error: "Faltan campos requeridos (boundsWest, boundsSouth, boundsEast, boundsNorth, minZoom, maxZoom)" });
+    }
+
+    const previous = await orthophotosService.getOrthophotoById(req.params.id);
+    if (!previous) {
+      await safeUnlink(`orthophotos/${file.filename}`);
+      return res.status(404).json({ error: "Ortofoto no encontrada" });
+    }
+
+    const orthophoto = await orthophotosService.replaceFile(req.params.id, {
+      filename: file.filename,
+      originalFilename: file.originalname,
+      filePath: `orthophotos/${file.filename}`,
+      fileSizeBytes: file.size,
+      boundsWest: Number(boundsWest),
+      boundsSouth: Number(boundsSouth),
+      boundsEast: Number(boundsEast),
+      boundsNorth: Number(boundsNorth),
+      minZoom: Number(minZoom),
+      maxZoom: Number(maxZoom),
+    });
+
+    await safeUnlink(previous.filePath);
+
+    res.json(orthophoto);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function listOrthophotos(_req: Request, res: Response, next: NextFunction) {
   try {
     res.json(await orthophotosService.listOrthophotos());

@@ -8,6 +8,7 @@ import {
   orthophotoShareUrl,
 } from "../api/orthophotos";
 import { listOrthophotoLayers, uploadOrthophotoLayer, deleteOrthophotoLayer } from "../api/orthophotoLayers";
+import { OrthophotoReplaceFilePanel } from "./OrthophotoReplaceFilePanel";
 import { theme } from "../styles/theme";
 
 interface OrthophotoManagerProps {
@@ -185,7 +186,7 @@ export function LayersSection({ orthophotoId }: { orthophotoId: string }) {
         border: `1px solid ${theme.color.border}`,
       }}
     >
-      <span style={{ color: theme.color.textMuted, fontSize: 11, fontWeight: 600 }}>Capas KML/KMZ</span>
+      <span style={{ color: theme.color.textMuted, fontSize: 11, fontWeight: 600 }}>Capas KML/KMZ/Shapefile</span>
 
       {layers === null && <span style={{ color: theme.color.textMuted, fontSize: 11 }}>Cargando...</span>}
       {layers?.length === 0 && <span style={{ color: theme.color.textMuted, fontSize: 11 }}>Ninguna capa cargada.</span>}
@@ -219,8 +220,8 @@ export function LayersSection({ orthophotoId }: { orthophotoId: string }) {
           cursor: uploading ? "default" : "pointer",
         }}
       >
-        {uploading ? "Subiendo..." : "+ Subir .kml/.kmz"}
-        <input type="file" accept=".kml,.kmz" onChange={handleUpload} disabled={uploading} style={{ display: "none" }} />
+        {uploading ? "Subiendo..." : "+ Subir .kml/.kmz/.zip (shapefile)"}
+        <input type="file" accept=".kml,.kmz,.zip" onChange={handleUpload} disabled={uploading} style={{ display: "none" }} />
       </label>
     </div>
   );
@@ -234,6 +235,7 @@ export function OrthophotoManager({ onUpdated, onUploadNew, onClose }: Orthophot
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [layersOpenId, setLayersOpenId] = useState<string | null>(null);
+  const [replaceFileId, setReplaceFileId] = useState<string | null>(null);
 
   const reload = () => {
     listOrthophotos()
@@ -403,7 +405,16 @@ export function OrthophotoManager({ onUpdated, onUploadNew, onClose }: Orthophot
                     onClick={() => setLayersOpenId(layersOpenId === o.id ? null : o.id)}
                     style={{ ...actionButtonStyle, color: theme.color.accent, borderColor: theme.color.accent }}
                   >
-                    {layersOpenId === o.id ? "Ocultar capas" : "Capas KML/KMZ"}
+                    {layersOpenId === o.id ? "Ocultar capas" : "Capas KML/KMZ/SHP"}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isBusy}
+                    onClick={() => setReplaceFileId(o.id)}
+                    style={{ ...actionButtonStyle, color: theme.color.accent, borderColor: theme.color.accent }}
+                  >
+                    ⟲ Reemplazar archivo
                   </button>
 
                   <button
@@ -466,6 +477,19 @@ export function OrthophotoManager({ onUpdated, onUploadNew, onClose }: Orthophot
           Subir nueva ortofoto
         </button>
       </div>
+
+      {replaceFileId && (
+        <OrthophotoReplaceFilePanel
+          orthophoto={orthophotos!.find((o) => o.id === replaceFileId)!}
+          onClose={(updated) => {
+            setReplaceFileId(null);
+            if (updated) {
+              reload();
+              onUpdated(updated);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

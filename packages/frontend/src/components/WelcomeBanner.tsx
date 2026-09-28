@@ -8,7 +8,9 @@ export function WelcomeBanner() {
 
   useEffect(() => {
     try {
-      if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
+      // sessionStorage (no localStorage): se recuerda mientras la pestaña siga abierta, pero
+      // vuelve a aparecer en cada sesión nueva del navegador en vez de una sola vez para siempre.
+      if (!sessionStorage.getItem(STORAGE_KEY)) setVisible(true);
     } catch {
       setVisible(true);
     }
@@ -17,9 +19,9 @@ export function WelcomeBanner() {
   const dismiss = () => {
     setVisible(false);
     try {
-      localStorage.setItem(STORAGE_KEY, "1");
+      sessionStorage.setItem(STORAGE_KEY, "1");
     } catch {
-      // ignore: si localStorage no esta disponible, simplemente se repite en la siguiente visita.
+      // ignore: si sessionStorage no esta disponible, simplemente se repite en la siguiente visita.
     }
   };
 

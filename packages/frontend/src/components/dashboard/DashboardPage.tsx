@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { StatsSummary } from "@visor3d/shared";
+import type { StatsSummary } from "@h-geovisor/shared";
 import { getSummary } from "../../api/stats";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { theme } from "../../styles/theme";

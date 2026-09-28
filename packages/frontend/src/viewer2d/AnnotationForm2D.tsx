@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { DamageType, Severity } from "@visor3d/shared";
+import type { DamageType, Severity } from "@h-geovisor/shared";
 import { useOrthophotoStore } from "../state/orthophotoStore";
 import { createAnnotation, uploadAnnotationPhotos } from "../api/annotations";
 import { getStoredAdminKey } from "../api/auth";
@@ -24,7 +24,7 @@ const SEVERITIES: { value: Severity | ""; label: string }[] = [
   { value: "alta", label: "Alta" },
 ];
 
-const AUTHOR_STORAGE_KEY = "visor3d_author_name";
+const AUTHOR_STORAGE_KEY = "h_geovisor_author_name";
 
 const fieldStyle: React.CSSProperties = {
   padding: "8px 10px",

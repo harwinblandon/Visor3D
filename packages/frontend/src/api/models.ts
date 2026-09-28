@@ -1,4 +1,4 @@
-import type { Model } from "@visor3d/shared";
+import type { Model } from "@h-geovisor/shared";
 import { apiFetch } from "./client";
 import { getStoredAdminKey } from "./auth";
 

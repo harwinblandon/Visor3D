@@ -1,4 +1,4 @@
-import type { Orthophoto } from "@visor3d/shared";
+import type { Orthophoto } from "@h-geovisor/shared";
 import { apiFetch } from "./client";
 import { getStoredAdminKey } from "./auth";
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Model } from "@visor3d/shared";
+import type { Model } from "@h-geovisor/shared";
 import { listModels, activateModel, deleteModel, setModelPublished, updateModel, modelShareUrl } from "../api/models";
 import { LocationPicker } from "./LocationPicker";
 import { theme } from "../styles/theme";

@@ -9,7 +9,7 @@ import {
   type MapMouseEvent,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { Orthophoto } from "@visor3d/shared";
+import type { Orthophoto } from "@h-geovisor/shared";
 import { getStoredAdminKey } from "../api/auth";
 import { orthophotoTileUrlTemplate, orthophotoTerrainTileUrlTemplate } from "../api/orthophotos";
 import { listMeasurements } from "../api/measurements";

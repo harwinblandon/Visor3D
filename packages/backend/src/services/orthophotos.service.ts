@@ -1,4 +1,4 @@
-import type { Orthophoto } from "@visor3d/shared";
+import type { Orthophoto } from "@h-geovisor/shared";
 import { pool } from "../db/pool.js";
 
 interface OrthophotoRow {

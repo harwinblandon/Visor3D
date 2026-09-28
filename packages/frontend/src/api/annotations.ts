@@ -1,4 +1,4 @@
-import type { Annotation, DamageType, Severity, AnnotationStatus, Point3D } from "@visor3d/shared";
+import type { Annotation, DamageType, Severity, AnnotationStatus, Point3D } from "@h-geovisor/shared";
 import { apiFetch } from "./client";
 import { getStoredAdminKey } from "./auth";
 

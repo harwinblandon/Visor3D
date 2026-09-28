@@ -1,4 +1,4 @@
-import type { Annotation, AnnotationPhoto, DamageType, Severity, AnnotationStatus } from "@visor3d/shared";
+import type { Annotation, AnnotationPhoto, DamageType, Severity, AnnotationStatus } from "@h-geovisor/shared";
 import { pool } from "../db/pool.js";
 
 interface AnnotationRow {

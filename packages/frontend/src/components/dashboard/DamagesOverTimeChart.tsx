@@ -1,5 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import type { StatsSummary } from "@visor3d/shared";
+import type { StatsSummary } from "@h-geovisor/shared";
 import { theme } from "../../styles/theme";
 import { ChartTooltip } from "./ChartTooltip";
 

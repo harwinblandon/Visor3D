@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Orthophoto, OrthophotoLayer } from "@visor3d/shared";
+import type { Orthophoto, OrthophotoLayer } from "@h-geovisor/shared";
 import {
   listOrthophotos,
   deleteOrthophoto,

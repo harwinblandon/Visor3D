@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Model, Orthophoto } from "@visor3d/shared";
+import type { Model, Orthophoto } from "@h-geovisor/shared";
 import { Viewer3D } from "./viewer/Viewer3D";
 import { OrthophotoViewer } from "./viewer2d/OrthophotoViewer";
 import { ModelUploadPanel } from "./components/ModelUploadPanel";

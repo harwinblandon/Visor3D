@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Vector3 } from "three";
-import type { Model } from "@visor3d/shared";
+import type { Model } from "@h-geovisor/shared";
 import { ModelLoader } from "./ModelLoader";
 import { CameraRig } from "./CameraRig";
 import { MeasureDistanceTool } from "./interactions/MeasureDistanceTool";

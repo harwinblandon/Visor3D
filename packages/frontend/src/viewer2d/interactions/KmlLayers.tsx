@@ -6,7 +6,7 @@ import {
   type LineLayerSpecification,
   type MapLayerMouseEvent,
 } from "maplibre-gl";
-import type { OrthophotoLayer } from "@visor3d/shared";
+import type { OrthophotoLayer } from "@h-geovisor/shared";
 import { useOrthophotoStore } from "../../state/orthophotoStore";
 import { useMap } from "../MapContext";
 import { useGeoJsonLayer } from "../useGeoJsonLayer";

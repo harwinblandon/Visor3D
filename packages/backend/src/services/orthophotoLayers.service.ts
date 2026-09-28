@@ -4,7 +4,7 @@ import JSZip from "jszip";
 import proj4 from "proj4";
 import { read as readShapefile } from "shapefile";
 import type { FeatureCollection, Geometry, Position } from "geojson";
-import type { OrthophotoLayer } from "@visor3d/shared";
+import type { OrthophotoLayer } from "@h-geovisor/shared";
 import { pool } from "../db/pool.js";
 
 interface OrthophotoLayerRow {

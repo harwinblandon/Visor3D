@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { Vector3 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import type { TourStop } from "@visor3d/shared";
+import type { TourStop } from "@h-geovisor/shared";
 import { useViewerStore, TOUR_LEG_DURATION_SECONDS, type TourStatus } from "../state/viewerStore";
 import { createTourStop } from "../api/tourStops";
 

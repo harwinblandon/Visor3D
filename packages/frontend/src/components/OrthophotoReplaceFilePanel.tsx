@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Orthophoto } from "@visor3d/shared";
+import type { Orthophoto } from "@h-geovisor/shared";
 import { replaceOrthophotoFile } from "../api/orthophotos";
 import { theme } from "../styles/theme";
 

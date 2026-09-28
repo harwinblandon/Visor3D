@@ -1,7 +1,7 @@
 import Drawing from "dxf-writer";
 import proj4 from "proj4";
-import type { Measurement, Annotation, Point3D } from "@visor3d/shared";
-import { circleFromPoints, circlePolygon } from "@visor3d/shared";
+import type { Measurement, Annotation, Point3D } from "@h-geovisor/shared";
+import { circleFromPoints, circlePolygon } from "@h-geovisor/shared";
 
 const LAYER_BY_TYPE: Record<Measurement["type"], string> = {
   distance: "Distancias",

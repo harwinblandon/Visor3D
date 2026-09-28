@@ -1,4 +1,4 @@
-import type { StatsSummary } from "@visor3d/shared";
+import type { StatsSummary } from "@h-geovisor/shared";
 import { apiFetch } from "./client";
 
 export function getSummary(modelId: string): Promise<StatsSummary> {

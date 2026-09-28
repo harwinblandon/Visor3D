@@ -1,4 +1,4 @@
-import type { Measurement, MeasurementType, Point3D } from "@visor3d/shared";
+import type { Measurement, MeasurementType, Point3D } from "@h-geovisor/shared";
 import { pool } from "../db/pool.js";
 
 interface MeasurementRow {

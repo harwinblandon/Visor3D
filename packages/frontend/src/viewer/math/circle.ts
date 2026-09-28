@@ -1,6 +1,6 @@
 import { Vector3 } from "three";
-import type { CircleDef, Point3D } from "@visor3d/shared";
-import { circleFromPoints, circlePolygon, circleRadius as sharedCircleRadius, circleToPoints } from "@visor3d/shared";
+import type { CircleDef, Point3D } from "@h-geovisor/shared";
+import { circleFromPoints, circlePolygon, circleRadius as sharedCircleRadius, circleToPoints } from "@h-geovisor/shared";
 
 export interface Circle3 {
   center: Vector3;

@@ -1,4 +1,4 @@
-import type { Point3D, TourStop } from "@visor3d/shared";
+import type { Point3D, TourStop } from "@h-geovisor/shared";
 import { apiFetch } from "./client";
 import { getStoredAdminKey } from "./auth";
 

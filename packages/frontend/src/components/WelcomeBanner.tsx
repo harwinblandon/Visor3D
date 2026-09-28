@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { theme } from "../styles/theme";
 
-const STORAGE_KEY = "visor3d_welcome_dismissed";
+const STORAGE_KEY = "h_geovisor_welcome_dismissed";
 
 export function WelcomeBanner() {
   const [visible, setVisible] = useState(false);
@@ -61,12 +61,13 @@ export function WelcomeBanner() {
       >
         <img src="/logo.png" alt="Logo" style={{ height: 56, width: "auto", alignSelf: "center" }} />
         <h3 style={{ color: theme.color.text, margin: 0, fontSize: 16, fontWeight: 600 }}>
-          Bienvenido a Visor3D
+          Bienvenido a H_GeoVisor
         </h3>
         <p style={{ color: theme.color.textMuted, fontSize: 13, margin: 0, lineHeight: 1.5 }}>
-          Visualiza modelos 3D a escala real directamente en el navegador: mide distancias y áreas,
-          vectoriza elementos y registra anotaciones sobre el propio modelo. Una herramienta pensada
-          para topografía, construcción, arquitectura e inspección técnica.
+          Visualiza modelos 3D y ortofotos georreferenciadas a escala real directamente en el
+          navegador: mide distancias y áreas, vectoriza elementos y registra anotaciones sobre el
+          propio modelo o mapa. Una herramienta pensada para topografía, SIG, ingeniería,
+          arquitectura y geodesia.
         </p>
         <button
           type="button"

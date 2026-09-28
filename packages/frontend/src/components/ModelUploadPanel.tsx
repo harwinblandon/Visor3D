@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Model } from "@visor3d/shared";
+import type { Model } from "@h-geovisor/shared";
 import { uploadModel } from "../api/models";
 import { LocationPicker } from "./LocationPicker";
 import { theme } from "../styles/theme";

@@ -1,4 +1,4 @@
-import type { TourStop, Point3D } from "@visor3d/shared";
+import type { TourStop, Point3D } from "@h-geovisor/shared";
 import { pool } from "../db/pool.js";
 
 interface TourStopRow {

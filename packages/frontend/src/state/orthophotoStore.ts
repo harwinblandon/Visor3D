@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Annotation, OrthophotoLayer } from "@visor3d/shared";
+import type { Annotation, OrthophotoLayer } from "@h-geovisor/shared";
 import type { LngLat } from "../viewer2d/math/geo";
 
 export type ActiveTool2D = "none" | "measure-distance" | "measure-area" | "vectorize-polyline" | "measure-circle" | "annotate";

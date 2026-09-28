@@ -1,4 +1,4 @@
-import type { Severity, AnnotationStatus } from "@visor3d/shared";
+import type { Severity, AnnotationStatus } from "@h-geovisor/shared";
 import { useViewerStore } from "../state/viewerStore";
 import { updateAnnotation, deleteAnnotation, photoUrl } from "../api/annotations";
 import { useIsMobile } from "../hooks/useIsMobile";

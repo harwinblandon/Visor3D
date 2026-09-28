@@ -1,4 +1,4 @@
-const STORAGE_KEY = "visor3d_admin_key";
+const STORAGE_KEY = "h_geovisor_admin_key";
 
 export function getStoredAdminKey(): string | null {
   try {

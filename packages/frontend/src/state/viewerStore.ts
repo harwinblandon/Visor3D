@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Vector3 } from "three";
-import type { Annotation, TourStop } from "@visor3d/shared";
+import type { Annotation, TourStop } from "@h-geovisor/shared";
 
 export type ActiveTool =
   | "none"

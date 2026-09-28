@@ -1,4 +1,4 @@
-import type { Severity, AnnotationStatus, StatsSummary } from "@visor3d/shared";
+import type { Severity, AnnotationStatus, StatsSummary } from "@h-geovisor/shared";
 import { pool } from "../db/pool.js";
 
 const SEVERITIES: Severity[] = ["baja", "media", "alta"];

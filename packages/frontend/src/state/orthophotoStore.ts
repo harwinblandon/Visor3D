@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Annotation } from "@visor3d/shared";
+import type { Annotation, OrthophotoLayer } from "@visor3d/shared";
 import type { LngLat } from "../viewer2d/math/geo";
 
 export type ActiveTool2D = "none" | "measure-distance" | "measure-area" | "vectorize-polyline" | "measure-circle" | "annotate";
@@ -64,6 +64,9 @@ interface OrthophotoState {
   editingMeasurement: EditingMeasurement2D | null;
   draggingIndex: number | null;
   lastCreatedMeasurementId: string | null;
+  /** Capas KML/KMZ/SHP cargadas para la ortofoto actual y cuáles están ocultas (solo de esta sesión, no se guarda). */
+  layers: OrthophotoLayer[];
+  hiddenLayerIds: Set<string>;
   setOrthophotoId: (id: string | null) => void;
   setBasemap: (basemap: BasemapId) => void;
   setActiveTool: (tool: ActiveTool2D) => void;
@@ -92,6 +95,8 @@ interface OrthophotoState {
   startDrag: (index: number) => void;
   endDrag: () => void;
   updateDragPoint: (point: LngLat) => void;
+  setLayers: (layers: OrthophotoLayer[]) => void;
+  toggleLayerVisibility: (id: string) => void;
 }
 
 export const useOrthophotoStore = create<OrthophotoState>((set) => ({
@@ -109,6 +114,8 @@ export const useOrthophotoStore = create<OrthophotoState>((set) => ({
   editingMeasurement: null,
   draggingIndex: null,
   lastCreatedMeasurementId: null,
+  layers: [],
+  hiddenLayerIds: new Set(),
 
   setOrthophotoId: (orthophotoId) => set({ orthophotoId }),
 
@@ -226,5 +233,15 @@ export const useOrthophotoStore = create<OrthophotoState>((set) => ({
       const points = state.pendingPoints.slice();
       points[state.draggingIndex] = point;
       return { pendingPoints: points };
+    }),
+
+  setLayers: (layers) => set({ layers }),
+
+  toggleLayerVisibility: (id) =>
+    set((state) => {
+      const next = new Set(state.hiddenLayerIds);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return { hiddenLayerIds: next };
     }),
 }));

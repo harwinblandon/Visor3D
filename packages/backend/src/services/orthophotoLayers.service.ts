@@ -14,6 +14,10 @@ interface OrthophotoLayerRow {
   original_filename: string | null;
   geojson: FeatureCollection;
   uploaded_at: string;
+  color: string | null;
+  line_width: number;
+  fill_opacity: number;
+  label_field: string | null;
 }
 
 function mapRow(row: OrthophotoLayerRow): OrthophotoLayer {
@@ -24,6 +28,10 @@ function mapRow(row: OrthophotoLayerRow): OrthophotoLayer {
     originalFilename: row.original_filename,
     geojson: row.geojson,
     uploadedAt: row.uploaded_at,
+    color: row.color,
+    lineWidth: row.line_width,
+    fillOpacity: row.fill_opacity,
+    labelField: row.label_field,
   };
 }
 
@@ -151,6 +159,30 @@ export async function createLayer(input: {
     [input.orthophotoId, input.name, input.originalFilename, JSON.stringify(input.geojson)],
   );
   return mapRow(rows[0]);
+}
+
+export interface UpdateLayerStyleInput {
+  color?: string | null;
+  lineWidth?: number;
+  fillOpacity?: number;
+  labelField?: string | null;
+}
+
+export async function updateLayerStyle(id: string, patch: UpdateLayerStyleInput): Promise<OrthophotoLayer | null> {
+  const { rows: currentRows } = await pool.query<OrthophotoLayerRow>("SELECT * FROM orthophoto_layers WHERE id = $1", [id]);
+  const current = currentRows[0];
+  if (!current) return null;
+
+  const color = patch.color !== undefined ? patch.color : current.color;
+  const lineWidth = patch.lineWidth !== undefined ? patch.lineWidth : current.line_width;
+  const fillOpacity = patch.fillOpacity !== undefined ? patch.fillOpacity : current.fill_opacity;
+  const labelField = patch.labelField !== undefined ? patch.labelField : current.label_field;
+
+  const { rows } = await pool.query<OrthophotoLayerRow>(
+    "UPDATE orthophoto_layers SET color = $2, line_width = $3, fill_opacity = $4, label_field = $5 WHERE id = $1 RETURNING *",
+    [id, color, lineWidth, fillOpacity, labelField],
+  );
+  return rows[0] ? mapRow(rows[0]) : null;
 }
 
 export async function listLayers(orthophotoId: string): Promise<OrthophotoLayer[]> {

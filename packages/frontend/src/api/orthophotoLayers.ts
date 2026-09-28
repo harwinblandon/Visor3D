@@ -22,6 +22,29 @@ export function uploadOrthophotoLayer(orthophotoId: string, file: File, name?: s
   });
 }
 
+export interface UpdateOrthophotoLayerStyleInput {
+  color?: string | null;
+  lineWidth?: number;
+  fillOpacity?: number;
+  labelField?: string | null;
+}
+
+export function updateOrthophotoLayerStyle(
+  orthophotoId: string,
+  layerId: string,
+  patch: UpdateOrthophotoLayerStyleInput,
+): Promise<OrthophotoLayer> {
+  const adminKey = getStoredAdminKey();
+  return apiFetch<OrthophotoLayer>(`/api/orthophotos/${orthophotoId}/layers/${layerId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(adminKey ? { "x-admin-key": adminKey } : {}),
+    },
+    body: JSON.stringify(patch),
+  });
+}
+
 export function deleteOrthophotoLayer(orthophotoId: string, layerId: string): Promise<void> {
   const adminKey = getStoredAdminKey();
   return apiFetch<void>(`/api/orthophotos/${orthophotoId}/layers/${layerId}`, {

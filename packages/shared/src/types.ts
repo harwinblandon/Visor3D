@@ -53,6 +53,12 @@ export interface OrthophotoLayer {
   originalFilename: string | null;
   geojson: FeatureCollection;
   uploadedAt: string;
+  /** Color de la capa (hex, ej. "#f59e0b"); si es null se asigna uno automático de una paleta. */
+  color: string | null;
+  lineWidth: number;
+  fillOpacity: number;
+  /** Nombre del atributo a usar como etiqueta del popup; si es null se usa name/description o se listan todos. */
+  labelField: string | null;
 }
 
 export type MeasurementType = "distance" | "area" | "polyline" | "circle";

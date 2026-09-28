@@ -19,6 +19,7 @@ orthophotosRouter.delete("/:id", requireAdmin, controller.deleteOrthophoto);
 
 orthophotosRouter.post("/:id/layers", requireAdmin, uploadOrthophotoLayer.single("file"), layersController.uploadLayer);
 orthophotosRouter.get("/:id/layers", layersController.listLayers);
+orthophotosRouter.patch("/:id/layers/:layerId", requireAdmin, layersController.updateLayerStyle);
 orthophotosRouter.delete("/:id/layers/:layerId", requireAdmin, layersController.deleteLayer);
 
 orthophotosRouter.post("/:id/terrain", requireAdmin, uploadOrthophotoMiddleware.single("file"), controller.uploadTerrain);

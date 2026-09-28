@@ -7,7 +7,7 @@ import {
   updateOrthophoto,
   orthophotoShareUrl,
 } from "../api/orthophotos";
-import { listOrthophotoLayers, uploadOrthophotoLayer, deleteOrthophotoLayer } from "../api/orthophotoLayers";
+import { listOrthophotoLayers, uploadOrthophotoLayer, deleteOrthophotoLayer, updateOrthophotoLayerStyle } from "../api/orthophotoLayers";
 import { OrthophotoReplaceFilePanel } from "./OrthophotoReplaceFilePanel";
 import { theme } from "../styles/theme";
 
@@ -132,11 +132,118 @@ function OrthophotoEditForm({ orthophoto, onCancel, onSaved }: OrthophotoEditFor
   );
 }
 
+const LAYER_PALETTE = [theme.color.accent, "#f59e0b", "#34d399", "#f472b6", "#a78bfa", "#60a5fa"];
+
+interface LayerStyleFormProps {
+  layer: OrthophotoLayer;
+  fallbackColor: string;
+  orthophotoId: string;
+  onCancel: () => void;
+  onSaved: (layer: OrthophotoLayer) => void;
+}
+
+function LayerStyleForm({ layer, fallbackColor, orthophotoId, onCancel, onSaved }: LayerStyleFormProps) {
+  const [color, setColor] = useState(layer.color ?? fallbackColor);
+  const [lineWidth, setLineWidth] = useState(String(layer.lineWidth));
+  const [fillOpacity, setFillOpacity] = useState(String(layer.fillOpacity));
+  const [labelField, setLabelField] = useState(layer.labelField ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const availableFields = Object.keys(layer.geojson.features[0]?.properties ?? {});
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const saved = await updateOrthophotoLayerStyle(orthophotoId, layer.id, {
+        color,
+        lineWidth: Number(lineWidth),
+        fillOpacity: Number(fillOpacity),
+        labelField: labelField || null,
+      });
+      onSaved(saved);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al guardar el estilo");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "8px 0" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+        <label style={{ color: theme.color.textMuted, fontSize: 10 }}>
+          Color
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            style={{ display: "block", marginTop: 4, width: 40, height: 26, padding: 0, border: `1px solid ${theme.color.border}`, borderRadius: 4, background: "transparent" }}
+          />
+        </label>
+        <label style={{ color: theme.color.textMuted, fontSize: 10, flex: 1 }}>
+          Grosor de línea
+          <input
+            type="number"
+            min="0.5"
+            step="0.5"
+            value={lineWidth}
+            onChange={(e) => setLineWidth(e.target.value)}
+            style={{ ...inputStyle, marginTop: 4, padding: "6px 8px" }}
+          />
+        </label>
+        <label style={{ color: theme.color.textMuted, fontSize: 10, flex: 1 }}>
+          Opacidad relleno
+          <input
+            type="number"
+            min="0"
+            max="1"
+            step="0.05"
+            value={fillOpacity}
+            onChange={(e) => setFillOpacity(e.target.value)}
+            style={{ ...inputStyle, marginTop: 4, padding: "6px 8px" }}
+          />
+        </label>
+      </div>
+
+      <label style={{ color: theme.color.textMuted, fontSize: 10 }}>
+        Atributo a mostrar como etiqueta
+        <select value={labelField} onChange={(e) => setLabelField(e.target.value)} style={{ ...inputStyle, marginTop: 4, padding: "6px 8px" }}>
+          <option value="">(automático — name/description o todos los atributos)</option>
+          {availableFields.map((f) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {error && <span style={{ color: theme.color.danger, fontSize: 11 }}>{error}</span>}
+
+      <div style={{ display: "flex", gap: 6 }}>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: "none", background: theme.color.accent, color: "#0b0d10", cursor: "pointer", fontSize: 11, fontWeight: 600 }}
+        >
+          {saving ? "Guardando..." : "Guardar estilo"}
+        </button>
+        <button type="button" onClick={onCancel} style={{ flex: 1, ...actionButtonStyle, padding: "6px 10px" }}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function LayersSection({ orthophotoId }: { orthophotoId: string }) {
   const [layers, setLayers] = useState<OrthophotoLayer[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [busyLayerId, setBusyLayerId] = useState<string | null>(null);
+  const [styleEditingId, setStyleEditingId] = useState<string | null>(null);
 
   const reload = () => {
     listOrthophotoLayers(orthophotoId)
@@ -191,21 +298,48 @@ export function LayersSection({ orthophotoId }: { orthophotoId: string }) {
       {layers === null && <span style={{ color: theme.color.textMuted, fontSize: 11 }}>Cargando...</span>}
       {layers?.length === 0 && <span style={{ color: theme.color.textMuted, fontSize: 11 }}>Ninguna capa cargada.</span>}
 
-      {layers?.map((l) => (
-        <div key={l.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-          <span style={{ color: theme.color.text, fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {l.name} <span style={{ color: theme.color.textMuted }}>({l.geojson.features.length} figura{l.geojson.features.length === 1 ? "" : "s"})</span>
-          </span>
-          <button
-            type="button"
-            disabled={busyLayerId === l.id}
-            onClick={() => handleDelete(l.id)}
-            style={{ border: "none", background: "transparent", color: theme.color.textMuted, cursor: "pointer", fontSize: 12, flexShrink: 0 }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = theme.color.danger)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = theme.color.textMuted)}
-          >
-            ×
-          </button>
+      {layers?.map((l, i) => (
+        <div key={l.id} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, color: theme.color.text, fontSize: 11 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: l.color ?? LAYER_PALETTE[i % LAYER_PALETTE.length], flexShrink: 0 }} />
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {l.name} <span style={{ color: theme.color.textMuted }}>({l.geojson.features.length} figura{l.geojson.features.length === 1 ? "" : "s"})</span>
+              </span>
+            </span>
+            <span style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+              <button
+                type="button"
+                onClick={() => setStyleEditingId(styleEditingId === l.id ? null : l.id)}
+                style={{ border: "none", background: "transparent", color: theme.color.accent, cursor: "pointer", fontSize: 11 }}
+              >
+                {styleEditingId === l.id ? "Cerrar" : "✎ Estilo"}
+              </button>
+              <button
+                type="button"
+                disabled={busyLayerId === l.id}
+                onClick={() => handleDelete(l.id)}
+                style={{ border: "none", background: "transparent", color: theme.color.textMuted, cursor: "pointer", fontSize: 12 }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = theme.color.danger)}
+                onMouseLeave={(e) => (e.currentTarget.style.color = theme.color.textMuted)}
+              >
+                ×
+              </button>
+            </span>
+          </div>
+
+          {styleEditingId === l.id && (
+            <LayerStyleForm
+              layer={l}
+              fallbackColor={LAYER_PALETTE[i % LAYER_PALETTE.length]}
+              orthophotoId={orthophotoId}
+              onCancel={() => setStyleEditingId(null)}
+              onSaved={() => {
+                setStyleEditingId(null);
+                reload();
+              }}
+            />
+          )}
         </div>
       ))}
 

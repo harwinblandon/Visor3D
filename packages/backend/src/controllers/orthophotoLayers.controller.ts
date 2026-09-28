@@ -51,6 +51,22 @@ export async function listLayers(req: Request, res: Response, next: NextFunction
   }
 }
 
+export async function updateLayerStyle(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { color, lineWidth, fillOpacity, labelField } = req.body;
+    const layer = await layersService.updateLayerStyle(req.params.layerId, {
+      color: color !== undefined ? color : undefined,
+      lineWidth: lineWidth !== undefined ? Number(lineWidth) : undefined,
+      fillOpacity: fillOpacity !== undefined ? Number(fillOpacity) : undefined,
+      labelField: labelField !== undefined ? labelField : undefined,
+    });
+    if (!layer) return res.status(404).json({ error: "Capa no encontrada" });
+    res.json(layer);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function deleteLayer(req: Request, res: Response, next: NextFunction) {
   try {
     const deleted = await layersService.deleteLayer(req.params.layerId);

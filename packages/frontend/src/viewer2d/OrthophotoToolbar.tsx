@@ -1,6 +1,7 @@
 import { useOrthophotoStore, type ActiveTool2D, type BasemapId } from "../state/orthophotoStore";
 import { finalizeAreaPolygon } from "./interactions/MeasureAreaTool";
 import { finalizePolyline } from "./interactions/PolylineTool";
+import { LAYER_PALETTE } from "./interactions/KmlLayers";
 import { exportOrthophotoUrl } from "../api/orthophotos";
 import { Dropdown, DropdownItem, DropdownLinkItem, DropdownDivider } from "../components/Dropdown";
 import { AdminUnlockMenu } from "../components/Toolbar";
@@ -72,6 +73,9 @@ export function OrthophotoToolbar({ orthophotoId, isAdmin, onUnlock, onLock, onO
   const removeLastPendingPoint = useOrthophotoStore((s) => s.removeLastPendingPoint);
   const basemap = useOrthophotoStore((s) => s.basemap);
   const setBasemap = useOrthophotoStore((s) => s.setBasemap);
+  const layers = useOrthophotoStore((s) => s.layers);
+  const hiddenLayerIds = useOrthophotoStore((s) => s.hiddenLayerIds);
+  const toggleLayerVisibility = useOrthophotoStore((s) => s.toggleLayerVisibility);
   const isMobile = useIsMobile();
 
   const isMeasuringArea = activeTool === "measure-area";
@@ -163,6 +167,21 @@ export function OrthophotoToolbar({ orthophotoId, isAdmin, onUnlock, onLock, onO
         <DropdownLinkItem href={exportOrthophotoUrl(orthophotoId, "dxf")}>Vectores — DXF</DropdownLinkItem>
         <DropdownLinkItem href={exportOrthophotoUrl(orthophotoId, "geojson")}>Vectores — GeoJSON</DropdownLinkItem>
       </Dropdown>
+
+      {layers.length > 0 && (
+        <Dropdown label={isMobile ? "▤" : "Capas"} closeOnItemClick={false}>
+          {layers.map((layer, i) => (
+            <DropdownItem
+              key={layer.id}
+              active={!hiddenLayerIds.has(layer.id)}
+              color={layer.color ?? LAYER_PALETTE[i % LAYER_PALETTE.length]}
+              onClick={() => toggleLayerVisibility(layer.id)}
+            >
+              {layer.name}
+            </DropdownItem>
+          ))}
+        </Dropdown>
+      )}
 
       <Dropdown label={isMobile ? "🗺" : `Mapa base: ${BASEMAP_LABELS[basemap]}`}>
         {(Object.keys(BASEMAP_LABELS) as BasemapId[]).map((b) => (

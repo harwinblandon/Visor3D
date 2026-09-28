@@ -5,9 +5,11 @@ interface DropdownProps {
   label: ReactNode;
   accentColor?: string;
   children: ReactNode;
+  /** false para listas de checkboxes donde se espera alternar varias opciones seguidas (ej. mostrar/ocultar capas) sin que el menú se cierre en cada clic. Por defecto true (comportamiento existente). */
+  closeOnItemClick?: boolean;
 }
 
-export function Dropdown({ label, accentColor, children }: DropdownProps) {
+export function Dropdown({ label, accentColor, children, closeOnItemClick = true }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -47,7 +49,7 @@ export function Dropdown({ label, accentColor, children }: DropdownProps) {
 
       {open && (
         <div
-          onClick={() => setOpen(false)}
+          onClick={closeOnItemClick ? () => setOpen(false) : undefined}
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",

@@ -162,6 +162,7 @@ export async function createLayer(input: {
 }
 
 export interface UpdateLayerStyleInput {
+  name?: string;
   color?: string | null;
   lineWidth?: number;
   fillOpacity?: number;
@@ -173,14 +174,15 @@ export async function updateLayerStyle(id: string, patch: UpdateLayerStyleInput)
   const current = currentRows[0];
   if (!current) return null;
 
+  const name = patch.name !== undefined ? patch.name : current.name;
   const color = patch.color !== undefined ? patch.color : current.color;
   const lineWidth = patch.lineWidth !== undefined ? patch.lineWidth : current.line_width;
   const fillOpacity = patch.fillOpacity !== undefined ? patch.fillOpacity : current.fill_opacity;
   const labelField = patch.labelField !== undefined ? patch.labelField : current.label_field;
 
   const { rows } = await pool.query<OrthophotoLayerRow>(
-    "UPDATE orthophoto_layers SET color = $2, line_width = $3, fill_opacity = $4, label_field = $5 WHERE id = $1 RETURNING *",
-    [id, color, lineWidth, fillOpacity, labelField],
+    "UPDATE orthophoto_layers SET name = $2, color = $3, line_width = $4, fill_opacity = $5, label_field = $6 WHERE id = $1 RETURNING *",
+    [id, name, color, lineWidth, fillOpacity, labelField],
   );
   return rows[0] ? mapRow(rows[0]) : null;
 }

@@ -4,6 +4,7 @@ import { unlink } from "node:fs/promises";
 import type { Request, Response, NextFunction } from "express";
 import * as modelsService from "../services/models.service.js";
 import { isValidAdminKey } from "../middleware/auth.js";
+import { fixUploadFilename } from "../utils/encoding.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, "..", "..", "uploads");
@@ -22,6 +23,7 @@ export async function uploadModel(req: Request, res: Response, next: NextFunctio
     if (!file) {
       return res.status(400).json({ error: "Falta el archivo .glb (campo 'file')" });
     }
+    file.originalname = fixUploadFilename(file.originalname);
     const { name, crsDescription, notes, latitude, longitude } = req.body;
     if (!name) {
       return res.status(400).json({ error: "Falta el campo 'name'" });

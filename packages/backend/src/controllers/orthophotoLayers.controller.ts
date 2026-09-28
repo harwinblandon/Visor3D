@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import * as orthophotosService from "../services/orthophotos.service.js";
 import * as layersService from "../services/orthophotoLayers.service.js";
 import { isValidAdminKey } from "../middleware/auth.js";
+import { fixUploadFilename } from "../utils/encoding.js";
 
 export async function uploadLayer(req: Request, res: Response, next: NextFunction) {
   try {
@@ -9,6 +10,7 @@ export async function uploadLayer(req: Request, res: Response, next: NextFunctio
     if (!file) {
       return res.status(400).json({ error: "Falta el archivo .kml/.kmz/.zip (campo 'file')" });
     }
+    file.originalname = fixUploadFilename(file.originalname);
     const orthophotoId = req.params.id;
     const orthophoto = await orthophotosService.getOrthophotoById(orthophotoId);
     if (!orthophoto) return res.status(404).json({ error: "Ortofoto no encontrada" });
@@ -53,8 +55,9 @@ export async function listLayers(req: Request, res: Response, next: NextFunction
 
 export async function updateLayerStyle(req: Request, res: Response, next: NextFunction) {
   try {
-    const { color, lineWidth, fillOpacity, labelField } = req.body;
+    const { name, color, lineWidth, fillOpacity, labelField } = req.body;
     const layer = await layersService.updateLayerStyle(req.params.layerId, {
+      name: name !== undefined ? name : undefined,
       color: color !== undefined ? color : undefined,
       lineWidth: lineWidth !== undefined ? Number(lineWidth) : undefined,
       fillOpacity: fillOpacity !== undefined ? Number(fillOpacity) : undefined,

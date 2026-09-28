@@ -23,6 +23,7 @@ export function uploadOrthophotoLayer(orthophotoId: string, file: File, name?: s
 }
 
 export interface UpdateOrthophotoLayerStyleInput {
+  name?: string;
   color?: string | null;
   lineWidth?: number;
   fillOpacity?: number;

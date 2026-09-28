@@ -5,6 +5,7 @@ import type { Request, Response, NextFunction } from "express";
 import * as orthophotosService from "../services/orthophotos.service.js";
 import * as mbtilesService from "../services/mbtiles.service.js";
 import { isValidAdminKey } from "../middleware/auth.js";
+import { fixUploadFilename } from "../utils/encoding.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsRoot = path.join(__dirname, "..", "..", "uploads");
@@ -23,6 +24,7 @@ export async function uploadOrthophoto(req: Request, res: Response, next: NextFu
     if (!file) {
       return res.status(400).json({ error: "Falta el archivo .mbtiles (campo 'file')" });
     }
+    file.originalname = fixUploadFilename(file.originalname);
     const { name, crsDescription, notes, boundsWest, boundsSouth, boundsEast, boundsNorth, minZoom, maxZoom } =
       req.body;
     if (!name) {
@@ -69,6 +71,7 @@ export async function replaceFile(req: Request, res: Response, next: NextFunctio
     if (!file) {
       return res.status(400).json({ error: "Falta el archivo .mbtiles (campo 'file')" });
     }
+    file.originalname = fixUploadFilename(file.originalname);
     const { boundsWest, boundsSouth, boundsEast, boundsNorth, minZoom, maxZoom } = req.body;
     if (
       boundsWest === undefined ||

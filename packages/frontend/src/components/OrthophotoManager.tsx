@@ -143,6 +143,7 @@ interface LayerStyleFormProps {
 }
 
 function LayerStyleForm({ layer, fallbackColor, orthophotoId, onCancel, onSaved }: LayerStyleFormProps) {
+  const [name, setName] = useState(layer.name);
   const [color, setColor] = useState(layer.color ?? fallbackColor);
   const [lineWidth, setLineWidth] = useState(String(layer.lineWidth));
   const [fillOpacity, setFillOpacity] = useState(String(layer.fillOpacity));
@@ -157,6 +158,7 @@ function LayerStyleForm({ layer, fallbackColor, orthophotoId, onCancel, onSaved 
     setError(null);
     try {
       const saved = await updateOrthophotoLayerStyle(orthophotoId, layer.id, {
+        name: name.trim() || layer.name,
         color,
         lineWidth: Number(lineWidth),
         fillOpacity: Number(fillOpacity),
@@ -172,6 +174,11 @@ function LayerStyleForm({ layer, fallbackColor, orthophotoId, onCancel, onSaved 
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "8px 0" }}>
+      <label style={{ color: theme.color.textMuted, fontSize: 10 }}>
+        Nombre
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} style={{ ...inputStyle, marginTop: 4, padding: "6px 8px" }} />
+      </label>
+
       <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
         <label style={{ color: theme.color.textMuted, fontSize: 10 }}>
           Color

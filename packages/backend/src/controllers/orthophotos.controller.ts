@@ -25,22 +25,19 @@ export async function uploadOrthophoto(req: Request, res: Response, next: NextFu
       return res.status(400).json({ error: "Falta el archivo .mbtiles (campo 'file')" });
     }
     file.originalname = fixUploadFilename(file.originalname);
-    const { name, crsDescription, notes, boundsWest, boundsSouth, boundsEast, boundsNorth, minZoom, maxZoom } =
-      req.body;
+    const { name, crsDescription, notes } = req.body;
     if (!name) {
+      await safeUnlink(`orthophotos/${file.filename}`);
       return res.status(400).json({ error: "Falta el campo 'name'" });
     }
-    if (
-      boundsWest === undefined ||
-      boundsSouth === undefined ||
-      boundsEast === undefined ||
-      boundsNorth === undefined ||
-      minZoom === undefined ||
-      maxZoom === undefined
-    ) {
-      return res
-        .status(400)
-        .json({ error: "Faltan campos requeridos (boundsWest, boundsSouth, boundsEast, boundsNorth, minZoom, maxZoom)" });
+
+    const boundsZoom = mbtilesService.readBoundsAndZoom(file.path);
+    if (!boundsZoom) {
+      await safeUnlink(`orthophotos/${file.filename}`);
+      return res.status(400).json({
+        error:
+          "El archivo .mbtiles no tiene bounds/zoom en su tabla 'metadata'. Genéralo con tools/process-orthophoto.mjs para que los incluya automáticamente.",
+      });
     }
 
     const orthophoto = await orthophotosService.createOrthophoto({
@@ -50,12 +47,7 @@ export async function uploadOrthophoto(req: Request, res: Response, next: NextFu
       filePath: `orthophotos/${file.filename}`,
       fileSizeBytes: file.size,
       crsDescription: crsDescription || null,
-      boundsWest: Number(boundsWest),
-      boundsSouth: Number(boundsSouth),
-      boundsEast: Number(boundsEast),
-      boundsNorth: Number(boundsNorth),
-      minZoom: Number(minZoom),
-      maxZoom: Number(maxZoom),
+      ...boundsZoom,
       notes: notes || null,
     });
 
@@ -72,19 +64,14 @@ export async function replaceFile(req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ error: "Falta el archivo .mbtiles (campo 'file')" });
     }
     file.originalname = fixUploadFilename(file.originalname);
-    const { boundsWest, boundsSouth, boundsEast, boundsNorth, minZoom, maxZoom } = req.body;
-    if (
-      boundsWest === undefined ||
-      boundsSouth === undefined ||
-      boundsEast === undefined ||
-      boundsNorth === undefined ||
-      minZoom === undefined ||
-      maxZoom === undefined
-    ) {
+
+    const boundsZoom = mbtilesService.readBoundsAndZoom(file.path);
+    if (!boundsZoom) {
       await safeUnlink(`orthophotos/${file.filename}`);
-      return res
-        .status(400)
-        .json({ error: "Faltan campos requeridos (boundsWest, boundsSouth, boundsEast, boundsNorth, minZoom, maxZoom)" });
+      return res.status(400).json({
+        error:
+          "El archivo .mbtiles no tiene bounds/zoom en su tabla 'metadata'. Genéralo con tools/process-orthophoto.mjs para que los incluya automáticamente.",
+      });
     }
 
     const previous = await orthophotosService.getOrthophotoById(req.params.id);
@@ -98,12 +85,7 @@ export async function replaceFile(req: Request, res: Response, next: NextFunctio
       originalFilename: file.originalname,
       filePath: `orthophotos/${file.filename}`,
       fileSizeBytes: file.size,
-      boundsWest: Number(boundsWest),
-      boundsSouth: Number(boundsSouth),
-      boundsEast: Number(boundsEast),
-      boundsNorth: Number(boundsNorth),
-      minZoom: Number(minZoom),
-      maxZoom: Number(maxZoom),
+      ...boundsZoom,
     });
 
     await safeUnlink(previous.filePath);
@@ -216,9 +198,13 @@ export async function uploadTerrain(req: Request, res: Response, next: NextFunct
     if (!file) {
       return res.status(400).json({ error: "Falta el archivo .mbtiles del terreno (campo 'file')" });
     }
-    const { minZoom, maxZoom } = req.body;
-    if (minZoom === undefined || maxZoom === undefined) {
-      return res.status(400).json({ error: "Faltan campos requeridos (minZoom, maxZoom)" });
+    const boundsZoom = mbtilesService.readBoundsAndZoom(file.path);
+    if (!boundsZoom) {
+      await safeUnlink(`orthophotos/${file.filename}`);
+      return res.status(400).json({
+        error:
+          "El archivo .mbtiles no tiene zoom en su tabla 'metadata'. Genéralo con tools/process-terrain.mjs para que lo incluya automáticamente.",
+      });
     }
 
     const previous = await orthophotosService.getOrthophotoById(req.params.id);
@@ -229,8 +215,8 @@ export async function uploadTerrain(req: Request, res: Response, next: NextFunct
 
     const orthophoto = await orthophotosService.setTerrain(req.params.id, {
       terrainPath: `orthophotos/${file.filename}`,
-      terrainMinZoom: Number(minZoom),
-      terrainMaxZoom: Number(maxZoom),
+      terrainMinZoom: boundsZoom.minZoom,
+      terrainMaxZoom: boundsZoom.maxZoom,
     });
 
     if (previous.terrainPath) await safeUnlink(previous.terrainPath);

@@ -43,21 +43,14 @@ export function OrthophotoUploadPanel({ onUploaded, onCancel }: OrthophotoUpload
   const [name, setName] = useState("");
   const [crsDescription, setCrsDescription] = useState("");
   const [notes, setNotes] = useState("");
-  const [boundsWest, setBoundsWest] = useState("");
-  const [boundsSouth, setBoundsSouth] = useState("");
-  const [boundsEast, setBoundsEast] = useState("");
-  const [boundsNorth, setBoundsNorth] = useState("");
-  const [minZoom, setMinZoom] = useState("");
-  const [maxZoom, setMaxZoom] = useState("");
   const [status, setStatus] = useState<"idle" | "uploading" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
-  const boundsValid = [boundsWest, boundsSouth, boundsEast, boundsNorth, minZoom, maxZoom].every((v) => v.trim() !== "");
-  const canSubmit = file && name.trim() && boundsValid && status !== "uploading";
+  const canSubmit = file && name.trim() && status !== "uploading";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !name.trim() || !boundsValid) return;
+    if (!file || !name.trim()) return;
     setStatus("uploading");
     setError(null);
     try {
@@ -66,12 +59,6 @@ export function OrthophotoUploadPanel({ onUploaded, onCancel }: OrthophotoUpload
         name: name.trim(),
         crsDescription: crsDescription || undefined,
         notes: notes || undefined,
-        boundsWest: Number(boundsWest),
-        boundsSouth: Number(boundsSouth),
-        boundsEast: Number(boundsEast),
-        boundsNorth: Number(boundsNorth),
-        minZoom: Number(minZoom),
-        maxZoom: Number(maxZoom),
       });
       onUploaded(orthophoto);
     } catch (err) {
@@ -100,8 +87,8 @@ export function OrthophotoUploadPanel({ onUploaded, onCancel }: OrthophotoUpload
           <img src="/logo.png" alt="Logo" style={{ height: 84, width: "auto" }} />
           <h2 style={{ color: theme.color.text, margin: 0, fontSize: 16, fontWeight: 600 }}>Subir ortofoto (.mbtiles)</h2>
           <p style={{ color: theme.color.textMuted, fontSize: 11, textAlign: "center", margin: 0 }}>
-            Genera el archivo con <code>tools/process-orthophoto.mjs</code> — al terminar imprime los
-            bounds, el zoom y el peso que necesitas copiar aquí.
+            Genera el archivo con <code>tools/process-orthophoto.mjs</code> — los bounds y el zoom se
+            detectan automáticamente del propio archivo, no hace falta copiarlos.
           </p>
         </div>
 
@@ -125,37 +112,6 @@ export function OrthophotoUploadPanel({ onUploaded, onCancel }: OrthophotoUpload
             style={{ ...inputStyle, marginTop: 6 }}
           />
         </label>
-
-        <div style={{ display: "flex", gap: 10 }}>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Bounds oeste
-            <input type="number" step="any" value={boundsWest} onChange={(e) => setBoundsWest(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Bounds sur
-            <input type="number" step="any" value={boundsSouth} onChange={(e) => setBoundsSouth(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Bounds este
-            <input type="number" step="any" value={boundsEast} onChange={(e) => setBoundsEast(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Bounds norte
-            <input type="number" step="any" value={boundsNorth} onChange={(e) => setBoundsNorth(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Zoom mínimo
-            <input type="number" step="1" value={minZoom} onChange={(e) => setMinZoom(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Zoom máximo
-            <input type="number" step="1" value={maxZoom} onChange={(e) => setMaxZoom(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-        </div>
 
         <label style={labelStyle}>
           Descripción del CRS (opcional)

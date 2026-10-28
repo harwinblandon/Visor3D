@@ -166,7 +166,7 @@ async function main() {
   console.log("Zoom:", `${datasetMd.minzoom ?? minZoomRequested}-${datasetMd.maxzoom ?? maxZoom}`);
   console.log("Bounds (WGS84):", { west, south, east, north });
   console.log("");
-  console.log("Usa estos valores (bounds, min/max zoom, peso) al subir la ortofoto desde el panel.");
+  console.log("Bounds y zoom se detectan solos al subir el archivo — no hace falta copiarlos.");
 }
 
 main().catch((err) => {

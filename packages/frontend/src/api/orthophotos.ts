@@ -21,12 +21,6 @@ export interface UploadOrthophotoInput {
   name: string;
   crsDescription?: string;
   notes?: string;
-  boundsWest: number;
-  boundsSouth: number;
-  boundsEast: number;
-  boundsNorth: number;
-  minZoom: number;
-  maxZoom: number;
 }
 
 export function uploadOrthophoto(input: UploadOrthophotoInput): Promise<Orthophoto> {
@@ -35,12 +29,6 @@ export function uploadOrthophoto(input: UploadOrthophotoInput): Promise<Orthopho
   formData.append("name", input.name);
   if (input.crsDescription) formData.append("crsDescription", input.crsDescription);
   if (input.notes) formData.append("notes", input.notes);
-  formData.append("boundsWest", String(input.boundsWest));
-  formData.append("boundsSouth", String(input.boundsSouth));
-  formData.append("boundsEast", String(input.boundsEast));
-  formData.append("boundsNorth", String(input.boundsNorth));
-  formData.append("minZoom", String(input.minZoom));
-  formData.append("maxZoom", String(input.maxZoom));
 
   const adminKey = getStoredAdminKey();
   return apiFetch<Orthophoto>("/api/orthophotos", {
@@ -58,23 +46,11 @@ export interface UpdateOrthophotoInput {
 
 export interface ReplaceOrthophotoFileInput {
   file: File;
-  boundsWest: number;
-  boundsSouth: number;
-  boundsEast: number;
-  boundsNorth: number;
-  minZoom: number;
-  maxZoom: number;
 }
 
 export function replaceOrthophotoFile(id: string, input: ReplaceOrthophotoFileInput): Promise<Orthophoto> {
   const formData = new FormData();
   formData.append("file", input.file);
-  formData.append("boundsWest", String(input.boundsWest));
-  formData.append("boundsSouth", String(input.boundsSouth));
-  formData.append("boundsEast", String(input.boundsEast));
-  formData.append("boundsNorth", String(input.boundsNorth));
-  formData.append("minZoom", String(input.minZoom));
-  formData.append("maxZoom", String(input.maxZoom));
 
   const adminKey = getStoredAdminKey();
   return apiFetch<Orthophoto>(`/api/orthophotos/${id}/file`, {
@@ -139,11 +115,9 @@ export function orthophotoTerrainTileUrlTemplate(orthophoto: Orthophoto): string
   return `${window.location.origin}/api/orthophotos/${orthophoto.id}/terrain-tiles/{z}/{x}/{y}?v=${fileVersion(orthophoto.terrainPath)}`;
 }
 
-export function uploadOrthophotoTerrain(id: string, file: File, minZoom: number, maxZoom: number): Promise<Orthophoto> {
+export function uploadOrthophotoTerrain(id: string, file: File): Promise<Orthophoto> {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("minZoom", String(minZoom));
-  formData.append("maxZoom", String(maxZoom));
 
   const adminKey = getStoredAdminKey();
   return apiFetch<Orthophoto>(`/api/orthophotos/${id}/terrain`, {

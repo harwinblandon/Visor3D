@@ -8,34 +8,14 @@ interface OrthophotoReplaceFilePanelProps {
   onClose: (updated?: Orthophoto) => void;
 }
 
-const inputStyle: React.CSSProperties = {
-  padding: "8px 10px",
-  borderRadius: theme.radius,
-  border: `1px solid ${theme.color.border}`,
-  background: theme.color.panelAlt,
-  color: theme.color.text,
-  fontFamily: theme.font,
-  fontSize: 12,
-  outline: "none",
-  width: "100%",
-  boxSizing: "border-box",
-};
-
 const labelStyle: React.CSSProperties = { color: theme.color.textMuted, fontSize: 11, display: "block" };
 
 export function OrthophotoReplaceFilePanel({ orthophoto, onClose }: OrthophotoReplaceFilePanelProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [boundsWest, setBoundsWest] = useState(String(orthophoto.boundsWest));
-  const [boundsSouth, setBoundsSouth] = useState(String(orthophoto.boundsSouth));
-  const [boundsEast, setBoundsEast] = useState(String(orthophoto.boundsEast));
-  const [boundsNorth, setBoundsNorth] = useState(String(orthophoto.boundsNorth));
-  const [minZoom, setMinZoom] = useState(String(orthophoto.minZoom));
-  const [maxZoom, setMaxZoom] = useState(String(orthophoto.maxZoom));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit =
-    file && boundsWest.trim() && boundsSouth.trim() && boundsEast.trim() && boundsNorth.trim() && minZoom.trim() && maxZoom.trim() && !busy;
+  const canSubmit = file && !busy;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,15 +23,7 @@ export function OrthophotoReplaceFilePanel({ orthophoto, onClose }: OrthophotoRe
     setBusy(true);
     setError(null);
     try {
-      const updated = await replaceOrthophotoFile(orthophoto.id, {
-        file,
-        boundsWest: Number(boundsWest),
-        boundsSouth: Number(boundsSouth),
-        boundsEast: Number(boundsEast),
-        boundsNorth: Number(boundsNorth),
-        minZoom: Number(minZoom),
-        maxZoom: Number(maxZoom),
-      });
+      const updated = await replaceOrthophotoFile(orthophoto.id, { file });
       onClose(updated);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al reemplazar el archivo");
@@ -105,7 +77,7 @@ export function OrthophotoReplaceFilePanel({ orthophoto, onClose }: OrthophotoRe
         <p style={{ color: theme.color.textMuted, fontSize: 11, margin: 0 }}>
           Sube un .mbtiles nuevo para <strong>{orthophoto.name}</strong> conservando el mismo enlace —
           útil al reprocesar con otros parámetros (zoom, formato) sin perder el acceso ya
-          compartido.
+          compartido. Los bounds y el zoom se detectan automáticamente del archivo.
         </p>
 
         <label style={labelStyle}>
@@ -117,37 +89,6 @@ export function OrthophotoReplaceFilePanel({ orthophoto, onClose }: OrthophotoRe
             style={{ display: "block", marginTop: 6, color: theme.color.text, fontSize: 12 }}
           />
         </label>
-
-        <div style={{ display: "flex", gap: 10 }}>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Bounds oeste
-            <input type="number" step="any" value={boundsWest} onChange={(e) => setBoundsWest(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Bounds sur
-            <input type="number" step="any" value={boundsSouth} onChange={(e) => setBoundsSouth(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Bounds este
-            <input type="number" step="any" value={boundsEast} onChange={(e) => setBoundsEast(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Bounds norte
-            <input type="number" step="any" value={boundsNorth} onChange={(e) => setBoundsNorth(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Zoom mínimo
-            <input type="number" step="1" value={minZoom} onChange={(e) => setMinZoom(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Zoom máximo
-            <input type="number" step="1" value={maxZoom} onChange={(e) => setMaxZoom(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-        </div>
 
         {error && <p style={{ color: theme.color.danger, fontSize: 12, margin: 0 }}>{error}</p>}
 

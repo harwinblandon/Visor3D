@@ -8,19 +8,6 @@ interface OrthophotoTerrainPanelProps {
   onClose: (updated?: { terrainPath: string | null; terrainMinZoom: number | null; terrainMaxZoom: number | null }) => void;
 }
 
-const inputStyle: React.CSSProperties = {
-  padding: "8px 10px",
-  borderRadius: theme.radius,
-  border: `1px solid ${theme.color.border}`,
-  background: theme.color.panelAlt,
-  color: theme.color.text,
-  fontFamily: theme.font,
-  fontSize: 12,
-  outline: "none",
-  width: "100%",
-  boxSizing: "border-box",
-};
-
 const labelStyle: React.CSSProperties = { color: theme.color.textMuted, fontSize: 11, display: "block" };
 
 const actionButtonStyle: React.CSSProperties = {
@@ -36,21 +23,19 @@ const actionButtonStyle: React.CSSProperties = {
 
 export function OrthophotoTerrainPanel({ orthophoto, onClose }: OrthophotoTerrainPanelProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [minZoom, setMinZoom] = useState("");
-  const [maxZoom, setMaxZoom] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasTerrain, setHasTerrain] = useState(!!orthophoto.terrainPath);
 
-  const canSubmit = file && minZoom.trim() && maxZoom.trim() && !busy;
+  const canSubmit = file && !busy;
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !minZoom.trim() || !maxZoom.trim()) return;
+    if (!file) return;
     setBusy(true);
     setError(null);
     try {
-      const updated = await uploadOrthophotoTerrain(orthophoto.id, file, Number(minZoom), Number(maxZoom));
+      const updated = await uploadOrthophotoTerrain(orthophoto.id, file);
       setHasTerrain(true);
       setFile(null);
       onClose({
@@ -153,17 +138,6 @@ export function OrthophotoTerrainPanel({ orthophoto, onClose }: OrthophotoTerrai
             style={{ display: "block", marginTop: 6, color: theme.color.text, fontSize: 12 }}
           />
         </label>
-
-        <div style={{ display: "flex", gap: 10 }}>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Zoom mínimo
-            <input type="number" step="1" value={minZoom} onChange={(e) => setMinZoom(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-          <label style={{ ...labelStyle, flex: 1 }}>
-            Zoom máximo
-            <input type="number" step="1" value={maxZoom} onChange={(e) => setMaxZoom(e.target.value)} style={{ ...inputStyle, marginTop: 6 }} />
-          </label>
-        </div>
 
         {error && <p style={{ color: theme.color.danger, fontSize: 12, margin: 0 }}>{error}</p>}
 

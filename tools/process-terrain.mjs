@@ -259,7 +259,7 @@ async function main() {
   console.log("Zoom:", `${datasetMd.minzoom ?? minZoomRequested}-${datasetMd.maxzoom ?? maxZoom}`);
   console.log("Bounds (WGS84):", { west, south, east, north });
   console.log("");
-  console.log("Usa estos valores (bounds, min/max zoom) al subir el terreno desde el panel de la ortofoto.");
+  console.log("El zoom se detecta solo al subir el archivo — no hace falta copiarlo.");
 }
 
 main().catch((err) => {

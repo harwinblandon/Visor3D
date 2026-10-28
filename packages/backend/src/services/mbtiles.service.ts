@@ -60,6 +60,49 @@ export function getTile(relativeFilePath: string, z: number, x: number, y: numbe
   };
 }
 
+export interface MbtilesBoundsZoom {
+  boundsWest: number;
+  boundsSouth: number;
+  boundsEast: number;
+  boundsNorth: number;
+  minZoom: number;
+  maxZoom: number;
+}
+
+/**
+ * Lee bounds/zoom directamente de la tabla "metadata" de un .mbtiles recien subido (GDAL los
+ * escribe ahi mismo al generar el archivo), para no tener que pedirselos al usuario a mano en
+ * el formulario de subida. absoluteFilePath es la ruta completa en disco (no relativa a
+ * uploads/), ya que esto se usa justo al recibir el archivo, antes de servir teselas.
+ */
+export function readBoundsAndZoom(absoluteFilePath: string): MbtilesBoundsZoom | null {
+  let db: Database.Database | undefined;
+  try {
+    db = new Database(absoluteFilePath, { readonly: true, fileMustExist: true });
+    const rows = db.prepare("SELECT name, value FROM metadata").all() as { name: string; value: string }[];
+    const meta = new Map(rows.map((r) => [r.name, r.value]));
+
+    const boundsRaw = meta.get("bounds");
+    const minZoomRaw = meta.get("minzoom");
+    const maxZoomRaw = meta.get("maxzoom");
+    if (!boundsRaw || minZoomRaw === undefined || maxZoomRaw === undefined) return null;
+
+    const parts = boundsRaw.split(",").map(Number);
+    if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return null;
+    const [boundsWest, boundsSouth, boundsEast, boundsNorth] = parts;
+
+    const minZoom = Number(minZoomRaw);
+    const maxZoom = Number(maxZoomRaw);
+    if (Number.isNaN(minZoom) || Number.isNaN(maxZoom)) return null;
+
+    return { boundsWest, boundsSouth, boundsEast, boundsNorth, minZoom, maxZoom };
+  } catch {
+    return null;
+  } finally {
+    db?.close();
+  }
+}
+
 export function closeAll(): void {
   for (const db of dbCache.values()) db.close();
   dbCache.clear();

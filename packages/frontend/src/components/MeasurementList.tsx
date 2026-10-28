@@ -4,6 +4,7 @@ import { deleteMeasurement, updateMeasurement } from "../api/measurements";
 import { computeDistance, computePolylineLength } from "../viewer/math/distance";
 import { computeNewellArea } from "../viewer/math/polygonArea";
 import { circleFromPointArray, circleRadius } from "../viewer/math/circle";
+import { computePlumb } from "../viewer/math/plumb";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { theme } from "../styles/theme";
 
@@ -197,7 +198,13 @@ function Row({
   );
 }
 
-const MEASURING_TOOLS: ActiveTool[] = ["measure-distance", "measure-area", "vectorize-polyline", "measure-circle"];
+const MEASURING_TOOLS: ActiveTool[] = [
+  "measure-distance",
+  "measure-area",
+  "vectorize-polyline",
+  "measure-circle",
+  "measure-plumb",
+];
 
 export function MeasurementList() {
   const activeTool = useViewerStore((s) => s.activeTool);
@@ -205,10 +212,12 @@ export function MeasurementList() {
   const areaMeasurements = useViewerStore((s) => s.areaMeasurements);
   const polylineMeasurements = useViewerStore((s) => s.polylineMeasurements);
   const circleMeasurements = useViewerStore((s) => s.circleMeasurements);
+  const plumbMeasurements = useViewerStore((s) => s.plumbMeasurements);
   const removeDistanceMeasurement = useViewerStore((s) => s.removeDistanceMeasurement);
   const removeAreaMeasurement = useViewerStore((s) => s.removeAreaMeasurement);
   const removePolylineMeasurement = useViewerStore((s) => s.removePolylineMeasurement);
   const removeCircleMeasurement = useViewerStore((s) => s.removeCircleMeasurement);
+  const removePlumbMeasurement = useViewerStore((s) => s.removePlumbMeasurement);
   const editingMeasurement = useViewerStore((s) => s.editingMeasurement);
   const startEditingMeasurement = useViewerStore((s) => s.startEditingMeasurement);
   const cancelEditingMeasurement = useViewerStore((s) => s.cancelEditingMeasurement);
@@ -226,7 +235,8 @@ export function MeasurementList() {
     distanceMeasurements.length === 0 &&
     areaMeasurements.length === 0 &&
     polylineMeasurements.length === 0 &&
-    circleMeasurements.length === 0;
+    circleMeasurements.length === 0 &&
+    plumbMeasurements.length === 0;
 
   const withDelete = (removeLocal: (id: string) => void) => (id: string) => {
     removeLocal(id);
@@ -237,6 +247,7 @@ export function MeasurementList() {
   const handleDeleteArea = withDelete(removeAreaMeasurement);
   const handleDeletePolyline = withDelete(removePolylineMeasurement);
   const handleDeleteCircle = withDelete(removeCircleMeasurement);
+  const handleDeletePlumb = withDelete(removePlumbMeasurement);
 
   const handleSaveVertices = async () => {
     if (!editingMeasurement) return;
@@ -248,7 +259,9 @@ export function MeasurementList() {
           ? computeNewellArea(points).area
           : type === "circle"
             ? circleRadius(circleFromPointArray(points))
-            : computePolylineLength(points);
+            : type === "plumb"
+              ? computePlumb(points[0], points[1]).deviation
+              : computePolylineLength(points);
 
     try {
       await updateMeasurement(id, { points: points.map((p) => ({ x: p.x, y: p.y, z: p.z })), value });
@@ -389,6 +402,28 @@ export function MeasurementList() {
           onDelete={() => handleDeleteCircle(m.id)}
         />
       ))}
+
+      {plumbMeasurements.map((m) => {
+        const { height } = computePlumb(m.points[0], m.points[1]);
+        return (
+          <Row
+            key={m.id}
+            color={theme.color.plumb}
+            value={`${(m.deviation * 100).toFixed(1)} cm en ${height.toFixed(2)} m`}
+            meta={m}
+            editingVertices={editingMeasurement?.type === "plumb" && editingMeasurement.id === m.id}
+            editingMeta={metaEditingId === m.id}
+            disabled={isBusy}
+            onEditVertices={() => !isBusy && startEditingMeasurement({ id: m.id, type: "plumb", points: m.points.map((p) => p.clone()) })}
+            onSaveVertices={handleSaveVertices}
+            onCancelVertices={cancelEditingMeasurement}
+            onOpenMeta={() => !isBusy && setMetaEditingId(m.id)}
+            onSaveMeta={(patch) => handleSaveMeta(m.id, "plumb", patch)}
+            onCancelMeta={() => setMetaEditingId(null)}
+            onDelete={() => handleDeletePlumb(m.id)}
+          />
+        );
+      })}
     </div>
   );
 }

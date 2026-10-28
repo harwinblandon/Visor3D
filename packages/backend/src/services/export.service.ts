@@ -8,6 +8,7 @@ const LAYER_BY_TYPE: Record<Measurement["type"], string> = {
   area: "Areas",
   polyline: "Polilineas",
   circle: "Circulos",
+  plumb: "Verticalidad",
 };
 
 const COLOR_BY_TYPE: Record<Measurement["type"], number> = {
@@ -15,6 +16,7 @@ const COLOR_BY_TYPE: Record<Measurement["type"], number> = {
   area: Drawing.ACI.CYAN,
   polyline: Drawing.ACI.WHITE,
   circle: Drawing.ACI.MAGENTA,
+  plumb: Drawing.ACI.GREEN,
 };
 
 function resolveLayerName(m: Measurement): string {

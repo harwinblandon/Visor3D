@@ -61,7 +61,7 @@ export interface OrthophotoLayer {
   labelField: string | null;
 }
 
-export type MeasurementType = "distance" | "area" | "polyline" | "circle";
+export type MeasurementType = "distance" | "area" | "polyline" | "circle" | "plumb";
 
 /** Punto {x,y,z}; para ortofotos x=longitud, y=latitud, z=0 (mismo esquema, coordenadas geográficas). */
 export interface Measurement {

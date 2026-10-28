@@ -8,6 +8,7 @@ import { MeasureDistanceTool } from "./interactions/MeasureDistanceTool";
 import { MeasureAreaTool, finalizeAreaPolygon } from "./interactions/MeasureAreaTool";
 import { PolylineTool, finalizePolyline } from "./interactions/PolylineTool";
 import { CircleTool } from "./interactions/CircleTool";
+import { MeasurePlumbTool } from "./interactions/MeasurePlumbTool";
 import { AnnotationTool } from "./interactions/AnnotationTool";
 import { CameraTourController } from "./CameraTourController";
 import { Toolbar } from "../components/Toolbar";
@@ -127,7 +128,27 @@ export function Viewer3D({
             note: r.note,
           }));
 
-        useViewerStore.setState({ distanceMeasurements, areaMeasurements, polylineMeasurements, circleMeasurements });
+        const plumbMeasurements = rows
+          .filter((r) => r.type === "plumb")
+          .map((r) => ({
+            id: r.id,
+            points: [
+              new Vector3(r.points[0].x, r.points[0].y, r.points[0].z),
+              new Vector3(r.points[1].x, r.points[1].y, r.points[1].z),
+            ] as [Vector3, Vector3],
+            deviation: r.value,
+            label: r.label,
+            layer: r.layer,
+            note: r.note,
+          }));
+
+        useViewerStore.setState({
+          distanceMeasurements,
+          areaMeasurements,
+          polylineMeasurements,
+          circleMeasurements,
+          plumbMeasurements,
+        });
       })
       .catch((err) => console.error("No se pudieron cargar las mediciones guardadas:", err));
 
@@ -141,7 +162,12 @@ export function Viewer3D({
   }, [model.id, setModelId, setAnnotations, setTourStops]);
 
   const handleSurfaceClick = (point: Vector3, normal: Vector3 | null) => {
-    if (activeTool === "measure-distance" || activeTool === "measure-area" || activeTool === "vectorize-polyline") {
+    if (
+      activeTool === "measure-distance" ||
+      activeTool === "measure-area" ||
+      activeTool === "vectorize-polyline" ||
+      activeTool === "measure-plumb"
+    ) {
       addPendingPoint(point.clone());
     } else if (activeTool === "measure-circle") {
       if (pendingPoints.length === 0 && normal) setPendingCircleNormal(normal.clone());
@@ -218,6 +244,7 @@ export function Viewer3D({
         <MeasureAreaTool />
         <PolylineTool />
         <CircleTool />
+        <MeasurePlumbTool />
         <AnnotationTool />
         <CameraTourController />
         <CameraRig target={bounds} />

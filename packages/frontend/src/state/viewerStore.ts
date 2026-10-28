@@ -8,6 +8,7 @@ export type ActiveTool =
   | "measure-area"
   | "vectorize-polyline"
   | "measure-circle"
+  | "measure-plumb"
   | "annotate";
 
 export interface PendingAnnotation {
@@ -46,7 +47,14 @@ export interface CircleMeasurement extends MeasurementMeta {
   radius: number;
 }
 
-export type EditingMeasurementType = "distance" | "area" | "polyline" | "circle";
+/** points: [base, punto superior sobre el muro] — ver viewer/math/plumb.ts */
+export interface PlumbMeasurement extends MeasurementMeta {
+  id: string;
+  points: [Vector3, Vector3];
+  deviation: number;
+}
+
+export type EditingMeasurementType = "distance" | "area" | "polyline" | "circle" | "plumb";
 
 export type TourStatus = "idle" | "playing" | "paused";
 
@@ -68,6 +76,7 @@ interface ViewerState {
   areaMeasurements: AreaMeasurement[];
   polylineMeasurements: PolylineMeasurement[];
   circleMeasurements: CircleMeasurement[];
+  plumbMeasurements: PlumbMeasurement[];
   annotations: Annotation[];
   pendingAnnotation: PendingAnnotation | null;
   selectedAnnotationId: string | null;
@@ -94,6 +103,8 @@ interface ViewerState {
   removePolylineMeasurement: (id: string) => void;
   addCircleMeasurement: (measurement: CircleMeasurement) => void;
   removeCircleMeasurement: (id: string) => void;
+  addPlumbMeasurement: (measurement: PlumbMeasurement) => void;
+  removePlumbMeasurement: (id: string) => void;
   setPendingAnnotation: (pending: PendingAnnotation | null) => void;
   setAnnotations: (annotations: Annotation[]) => void;
   addAnnotation: (annotation: Annotation) => void;
@@ -134,6 +145,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
   areaMeasurements: [],
   polylineMeasurements: [],
   circleMeasurements: [],
+  plumbMeasurements: [],
   annotations: [],
   pendingAnnotation: null,
   selectedAnnotationId: null,
@@ -206,6 +218,17 @@ export const useViewerStore = create<ViewerState>((set) => ({
       circleMeasurements: state.circleMeasurements.filter((m) => m.id !== id),
     })),
 
+  addPlumbMeasurement: (measurement) =>
+    set((state) => ({
+      plumbMeasurements: [...state.plumbMeasurements, measurement],
+      pendingPoints: [],
+    })),
+
+  removePlumbMeasurement: (id) =>
+    set((state) => ({
+      plumbMeasurements: state.plumbMeasurements.filter((m) => m.id !== id),
+    })),
+
   setPendingAnnotation: (pending) => set({ pendingAnnotation: pending }),
 
   setAnnotations: (annotations) => set({ annotations }),
@@ -253,6 +276,12 @@ export const useViewerStore = create<ViewerState>((set) => ({
         state.editingMeasurement?.type === "circle"
           ? state.circleMeasurements.map((m) => (m.id === id ? { ...m, points, radius: value } : m))
           : state.circleMeasurements,
+      plumbMeasurements:
+        state.editingMeasurement?.type === "plumb"
+          ? state.plumbMeasurements.map((m) =>
+              m.id === id ? { ...m, points: [points[0], points[1]] as [Vector3, Vector3], deviation: value } : m,
+            )
+          : state.plumbMeasurements,
     })),
 
   updateMeasurementMeta: (id, type, patch) =>
@@ -273,6 +302,10 @@ export const useViewerStore = create<ViewerState>((set) => ({
         type === "circle"
           ? state.circleMeasurements.map((m) => (m.id === id ? { ...m, ...patch } : m))
           : state.circleMeasurements,
+      plumbMeasurements:
+        type === "plumb"
+          ? state.plumbMeasurements.map((m) => (m.id === id ? { ...m, ...patch } : m))
+          : state.plumbMeasurements,
     })),
 
   setLastCreatedMeasurementId: (id) => set({ lastCreatedMeasurementId: id }),

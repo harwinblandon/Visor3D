@@ -13,6 +13,7 @@ const TOOL_LABELS: Record<ActiveTool, string> = {
   "measure-area": "Medir área",
   "vectorize-polyline": "Polilínea",
   "measure-circle": "Círculo (centro + radio)",
+  "measure-plumb": "Verticalidad (base + punto superior)",
   annotate: "Anotar daño",
 };
 
@@ -21,6 +22,7 @@ const TOOL_COLORS: Partial<Record<ActiveTool, string>> = {
   "measure-area": theme.color.area,
   "vectorize-polyline": theme.color.polyline,
   "measure-circle": theme.color.circle,
+  "measure-plumb": theme.color.plumb,
   annotate: theme.color.severity.alta,
 };
 
@@ -162,15 +164,20 @@ export function Toolbar({
   const isVectorizing = activeTool === "vectorize-polyline";
   const isMeasuringDistance = activeTool === "measure-distance";
   const isMeasuringCircle = activeTool === "measure-circle";
+  const isMeasuringPlumb = activeTool === "measure-plumb";
   const activeToolColor = activeTool !== "none" ? TOOL_COLORS[activeTool] : undefined;
   const canUndoPoint =
-    (isMeasuringDistance || isMeasuringArea || isVectorizing || isMeasuringCircle) && pendingPoints.length > 0;
+    (isMeasuringDistance || isMeasuringArea || isVectorizing || isMeasuringCircle || isMeasuringPlumb) &&
+    pendingPoints.length > 0;
 
   const toolStatus =
-    (activeTool === "measure-distance" || activeTool === "measure-circle") && pendingPoints.length === 1
+    (activeTool === "measure-distance" || activeTool === "measure-circle" || activeTool === "measure-plumb") &&
+    pendingPoints.length === 1
       ? activeTool === "measure-circle"
         ? "clic para definir el radio"
-        : "clic en el 2° punto"
+        : activeTool === "measure-plumb"
+          ? "clic más arriba sobre el muro"
+          : "clic en el 2° punto"
       : activeTool === "measure-area"
         ? `${pendingPoints.length} pto(s)`
         : activeTool === "vectorize-polyline"

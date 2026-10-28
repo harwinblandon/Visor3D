@@ -1,21 +1,9 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { unlink } from "node:fs/promises";
 import type { Request, Response, NextFunction } from "express";
 import * as modelsService from "../services/models.service.js";
 import { isValidAdminKey } from "../middleware/auth.js";
 import { fixUploadFilename } from "../utils/encoding.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsRoot = path.join(__dirname, "..", "..", "uploads");
-
-async function safeUnlink(relativePath: string) {
-  try {
-    await unlink(path.join(uploadsRoot, relativePath));
-  } catch (err) {
-    console.error(`No se pudo borrar el archivo ${relativePath}:`, err);
-  }
-}
+import { maybeRecordView } from "../utils/recordView.js";
+import { persistLocalFile, removeFile } from "../utils/fileCache.js";
 
 export async function uploadModel(req: Request, res: Response, next: NextFunction) {
   try {
@@ -29,11 +17,14 @@ export async function uploadModel(req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ error: "Falta el campo 'name'" });
     }
 
+    const filePath = `models/${file.filename}`;
+    await persistLocalFile(filePath, file.mimetype);
+
     const model = await modelsService.createModel({
       name,
       filename: file.filename,
       originalFilename: file.originalname,
-      filePath: `models/${file.filename}`,
+      filePath,
       fileSizeBytes: file.size,
       crsDescription: crsDescription || null,
       latitude: latitude ? Number(latitude) : null,
@@ -62,6 +53,7 @@ export async function getActiveModel(req: Request, res: Response, next: NextFunc
     if (!model.isPublished && !isValidAdminKey(req.header("x-admin-key"))) {
       return res.status(404).json({ error: "No hay ningún modelo activo" });
     }
+    maybeRecordView(req, "model", model.id);
     res.json(model);
   } catch (err) {
     next(err);
@@ -75,6 +67,7 @@ export async function getModelById(req: Request, res: Response, next: NextFuncti
     if (!model.isPublished && !isValidAdminKey(req.header("x-admin-key"))) {
       return res.status(404).json({ error: "Modelo no encontrado" });
     }
+    maybeRecordView(req, "model", model.id);
     res.json(model);
   } catch (err) {
     next(err);
@@ -132,8 +125,8 @@ export async function deleteModel(req: Request, res: Response, next: NextFunctio
     const deleted = await modelsService.deleteModel(req.params.id);
     if (!deleted) return res.status(404).json({ error: "Modelo no encontrado" });
 
-    await safeUnlink(deleted.modelFilePath);
-    await Promise.all(deleted.photoFilePaths.map((p) => safeUnlink(p)));
+    await removeFile(deleted.modelFilePath);
+    await Promise.all(deleted.photoFilePaths.map((p) => removeFile(p)));
 
     res.status(204).send();
   } catch (err) {

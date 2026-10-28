@@ -1,19 +1,6 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { unlink } from "node:fs/promises";
 import type { Request, Response, NextFunction } from "express";
 import * as annotationsService from "../services/annotations.service.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsRoot = path.join(__dirname, "..", "..", "uploads");
-
-async function safeUnlink(relativePath: string) {
-  try {
-    await unlink(path.join(uploadsRoot, relativePath));
-  } catch (err) {
-    console.error(`No se pudo borrar el archivo ${relativePath}:`, err);
-  }
-}
+import { persistLocalFile, removeFile } from "../utils/fileCache.js";
 
 export async function createAnnotation(req: Request, res: Response, next: NextFunction) {
   try {
@@ -92,7 +79,7 @@ export async function deleteAnnotation(req: Request, res: Response, next: NextFu
   try {
     const photos = await annotationsService.deleteAnnotation(req.params.id);
     if (!photos) return res.status(404).json({ error: "Anotación no encontrada" });
-    await Promise.all(photos.map((p) => safeUnlink(p.filePath)));
+    await Promise.all(photos.map((p) => removeFile(p.filePath)));
     res.status(204).send();
   } catch (err) {
     next(err);
@@ -109,7 +96,10 @@ export async function addPhotos(req: Request, res: Response, next: NextFunction)
     if (!annotation) return res.status(404).json({ error: "Anotación no encontrada" });
 
     const photos = await Promise.all(
-      files.map((file) => annotationsService.addPhoto(req.params.id, file)),
+      files.map(async (file) => {
+        await persistLocalFile(`photos/${file.filename}`, file.mimetype);
+        return annotationsService.addPhoto(req.params.id, file);
+      }),
     );
     res.status(201).json(photos);
   } catch (err) {
@@ -121,7 +111,7 @@ export async function deletePhoto(req: Request, res: Response, next: NextFunctio
   try {
     const photo = await annotationsService.deletePhoto(req.params.photoId);
     if (!photo) return res.status(404).json({ error: "Foto no encontrada" });
-    await safeUnlink(photo.filePath);
+    await removeFile(photo.filePath);
     res.status(204).send();
   } catch (err) {
     next(err);

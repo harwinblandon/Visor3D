@@ -1,22 +1,10 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { unlink } from "node:fs/promises";
 import type { Request, Response, NextFunction } from "express";
 import * as orthophotosService from "../services/orthophotos.service.js";
 import * as mbtilesService from "../services/mbtiles.service.js";
 import { isValidAdminKey } from "../middleware/auth.js";
 import { fixUploadFilename } from "../utils/encoding.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsRoot = path.join(__dirname, "..", "..", "uploads");
-
-async function safeUnlink(relativePath: string) {
-  try {
-    await unlink(path.join(uploadsRoot, relativePath));
-  } catch (err) {
-    console.error(`No se pudo borrar el archivo ${relativePath}:`, err);
-  }
-}
+import { maybeRecordView } from "../utils/recordView.js";
+import { persistLocalFile, removeFile } from "../utils/fileCache.js";
 
 export async function uploadOrthophoto(req: Request, res: Response, next: NextFunction) {
   try {
@@ -27,18 +15,20 @@ export async function uploadOrthophoto(req: Request, res: Response, next: NextFu
     file.originalname = fixUploadFilename(file.originalname);
     const { name, crsDescription, notes } = req.body;
     if (!name) {
-      await safeUnlink(`orthophotos/${file.filename}`);
+      await removeFile(`orthophotos/${file.filename}`);
       return res.status(400).json({ error: "Falta el campo 'name'" });
     }
 
     const boundsZoom = mbtilesService.readBoundsAndZoom(file.path);
     if (!boundsZoom) {
-      await safeUnlink(`orthophotos/${file.filename}`);
+      await removeFile(`orthophotos/${file.filename}`);
       return res.status(400).json({
         error:
           "El archivo .mbtiles no tiene bounds/zoom en su tabla 'metadata'. Genéralo con tools/process-orthophoto.mjs para que los incluya automáticamente.",
       });
     }
+
+    await persistLocalFile(`orthophotos/${file.filename}`, file.mimetype);
 
     const orthophoto = await orthophotosService.createOrthophoto({
       name,
@@ -67,7 +57,7 @@ export async function replaceFile(req: Request, res: Response, next: NextFunctio
 
     const boundsZoom = mbtilesService.readBoundsAndZoom(file.path);
     if (!boundsZoom) {
-      await safeUnlink(`orthophotos/${file.filename}`);
+      await removeFile(`orthophotos/${file.filename}`);
       return res.status(400).json({
         error:
           "El archivo .mbtiles no tiene bounds/zoom en su tabla 'metadata'. Genéralo con tools/process-orthophoto.mjs para que los incluya automáticamente.",
@@ -76,9 +66,11 @@ export async function replaceFile(req: Request, res: Response, next: NextFunctio
 
     const previous = await orthophotosService.getOrthophotoById(req.params.id);
     if (!previous) {
-      await safeUnlink(`orthophotos/${file.filename}`);
+      await removeFile(`orthophotos/${file.filename}`);
       return res.status(404).json({ error: "Ortofoto no encontrada" });
     }
+
+    await persistLocalFile(`orthophotos/${file.filename}`, file.mimetype);
 
     const orthophoto = await orthophotosService.replaceFile(req.params.id, {
       filename: file.filename,
@@ -88,7 +80,7 @@ export async function replaceFile(req: Request, res: Response, next: NextFunctio
       ...boundsZoom,
     });
 
-    await safeUnlink(previous.filePath);
+    await removeFile(previous.filePath);
 
     res.json(orthophoto);
   } catch (err) {
@@ -111,6 +103,7 @@ export async function getOrthophotoById(req: Request, res: Response, next: NextF
     if (!orthophoto.isPublished && !isValidAdminKey(req.header("x-admin-key"))) {
       return res.status(404).json({ error: "Ortofoto no encontrada" });
     }
+    maybeRecordView(req, "orthophoto", orthophoto.id);
     res.json(orthophoto);
   } catch (err) {
     next(err);
@@ -166,7 +159,7 @@ export async function getTile(req: Request, res: Response, next: NextFunction) {
       return res.status(400).end();
     }
 
-    const tile = mbtilesService.getTile(orthophoto.filePath, z, x, y);
+    const tile = await mbtilesService.getTile(orthophoto.filePath, z, x, y);
     if (!tile) return res.status(404).end();
 
     res.setHeader("Content-Type", tile.contentType);
@@ -182,9 +175,9 @@ export async function deleteOrthophoto(req: Request, res: Response, next: NextFu
     const deleted = await orthophotosService.deleteOrthophoto(req.params.id);
     if (!deleted) return res.status(404).json({ error: "Ortofoto no encontrada" });
 
-    await safeUnlink(deleted.orthophotoFilePath);
-    if (deleted.terrainFilePath) await safeUnlink(deleted.terrainFilePath);
-    await Promise.all(deleted.photoFilePaths.map((p) => safeUnlink(p)));
+    await removeFile(deleted.orthophotoFilePath);
+    if (deleted.terrainFilePath) await removeFile(deleted.terrainFilePath);
+    await Promise.all(deleted.photoFilePaths.map((p) => removeFile(p)));
 
     res.status(204).send();
   } catch (err) {
@@ -200,7 +193,7 @@ export async function uploadTerrain(req: Request, res: Response, next: NextFunct
     }
     const boundsZoom = mbtilesService.readBoundsAndZoom(file.path);
     if (!boundsZoom) {
-      await safeUnlink(`orthophotos/${file.filename}`);
+      await removeFile(`orthophotos/${file.filename}`);
       return res.status(400).json({
         error:
           "El archivo .mbtiles no tiene zoom en su tabla 'metadata'. Genéralo con tools/process-terrain.mjs para que lo incluya automáticamente.",
@@ -209,9 +202,11 @@ export async function uploadTerrain(req: Request, res: Response, next: NextFunct
 
     const previous = await orthophotosService.getOrthophotoById(req.params.id);
     if (!previous) {
-      await safeUnlink(`orthophotos/${file.filename}`);
+      await removeFile(`orthophotos/${file.filename}`);
       return res.status(404).json({ error: "Ortofoto no encontrada" });
     }
+
+    await persistLocalFile(`orthophotos/${file.filename}`, file.mimetype);
 
     const orthophoto = await orthophotosService.setTerrain(req.params.id, {
       terrainPath: `orthophotos/${file.filename}`,
@@ -219,7 +214,7 @@ export async function uploadTerrain(req: Request, res: Response, next: NextFunct
       terrainMaxZoom: boundsZoom.maxZoom,
     });
 
-    if (previous.terrainPath) await safeUnlink(previous.terrainPath);
+    if (previous.terrainPath) await removeFile(previous.terrainPath);
 
     res.status(201).json(orthophoto);
   } catch (err) {
@@ -232,7 +227,7 @@ export async function deleteTerrain(req: Request, res: Response, next: NextFunct
     const result = await orthophotosService.clearTerrain(req.params.id);
     if (!result) return res.status(404).json({ error: "Ortofoto no encontrada" });
 
-    if (result.removedTerrainPath) await safeUnlink(result.removedTerrainPath);
+    if (result.removedTerrainPath) await removeFile(result.removedTerrainPath);
 
     res.json(result.orthophoto);
   } catch (err) {
@@ -255,7 +250,7 @@ export async function getTerrainTile(req: Request, res: Response, next: NextFunc
       return res.status(400).end();
     }
 
-    const tile = mbtilesService.getTile(orthophoto.terrainPath, z, x, y);
+    const tile = await mbtilesService.getTile(orthophoto.terrainPath, z, x, y);
     if (!tile) return res.status(404).end();
 
     res.setHeader("Content-Type", tile.contentType);

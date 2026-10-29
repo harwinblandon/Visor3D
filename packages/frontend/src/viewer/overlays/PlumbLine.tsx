@@ -40,11 +40,11 @@ export function PlumbLine({ base, top, label, editable, onVertexDown }: PlumbLin
 
       <mesh position={base} onPointerDown={handleDown(0)}>
         <sphereGeometry args={[radius, 12, 12]} />
-        <meshBasicMaterial color={editable ? "#ffffff" : theme.color.plumb} />
+        <meshBasicMaterial color={editable ? "#ffffff" : theme.color.plumb} transparent opacity={0.45} depthWrite={false} />
       </mesh>
       <mesh position={top} onPointerDown={handleDown(1)}>
         <sphereGeometry args={[radius, 12, 12]} />
-        <meshBasicMaterial color={editable ? "#ffffff" : theme.color.plumb} />
+        <meshBasicMaterial color={editable ? "#ffffff" : theme.color.plumb} transparent opacity={0.45} depthWrite={false} />
       </mesh>
 
       {/* Anclada al punto superior pero desplazada hacia arriba (no centrada encima), para

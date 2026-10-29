@@ -71,7 +71,7 @@ export function MeasureAreaTool() {
           {pendingPoints.map((p, i) => (
             <mesh key={i} position={p} onPointerDown={handlePendingVertexDown(i)}>
               <sphereGeometry args={[0.05, 12, 12]} />
-              <meshBasicMaterial color="#00aaff" />
+              <meshBasicMaterial color="#00aaff" transparent opacity={0.45} depthWrite={false} />
             </mesh>
           ))}
         </>

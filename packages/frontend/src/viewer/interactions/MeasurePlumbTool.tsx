@@ -70,7 +70,7 @@ export function MeasurePlumbTool() {
       {activeTool === "measure-plumb" && pendingPoints.length === 1 && (
         <mesh position={pendingPoints[0]} onPointerDown={handlePendingVertexDown}>
           <sphereGeometry args={[0.05, 12, 12]} />
-          <meshBasicMaterial color="#ffcc00" />
+          <meshBasicMaterial color="#ffcc00" transparent opacity={0.45} depthWrite={false} />
         </mesh>
       )}
     </group>

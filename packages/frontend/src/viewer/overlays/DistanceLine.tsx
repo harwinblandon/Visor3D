@@ -32,11 +32,11 @@ export function DistanceLine({ a, b, distance, label, editable, onVertexDown }: 
       <Line points={[a, b]} color={theme.color.distance} lineWidth={editable ? 3 : 2} />
       <mesh position={a} onPointerDown={handleDown(0)}>
         <sphereGeometry args={[radius, 12, 12]} />
-        <meshBasicMaterial color={editable ? "#ffffff" : theme.color.distance} />
+        <meshBasicMaterial color={editable ? "#ffffff" : theme.color.distance} transparent opacity={0.45} depthWrite={false} />
       </mesh>
       <mesh position={b} onPointerDown={handleDown(1)}>
         <sphereGeometry args={[radius, 12, 12]} />
-        <meshBasicMaterial color={editable ? "#ffffff" : theme.color.distance} />
+        <meshBasicMaterial color={editable ? "#ffffff" : theme.color.distance} transparent opacity={0.45} depthWrite={false} />
       </mesh>
       <Html position={midpoint} center>
         <div

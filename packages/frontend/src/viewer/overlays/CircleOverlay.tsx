@@ -51,11 +51,11 @@ export function CircleOverlay({ circle, label, editable, onVertexDown }: CircleO
         <>
           <mesh position={circle.center} onPointerDown={handleDown(0)}>
             <sphereGeometry args={[handleRadius, 12, 12]} />
-            <meshBasicMaterial color="#ffffff" />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.45} depthWrite={false} />
           </mesh>
           <mesh position={circle.edge} onPointerDown={handleDown(1)}>
             <sphereGeometry args={[handleRadius, 12, 12]} />
-            <meshBasicMaterial color="#ffffff" />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.45} depthWrite={false} />
           </mesh>
         </>
       )}

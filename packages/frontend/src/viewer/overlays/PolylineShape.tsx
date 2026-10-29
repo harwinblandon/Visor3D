@@ -30,7 +30,7 @@ export function PolylineShape({ points, length, label, editable, onVertexDown }:
       {points.map((p, i) => (
         <mesh key={i} position={p} onPointerDown={handleDown(i)}>
           <sphereGeometry args={[editable ? VERTEX_RADIUS_EDITABLE : VERTEX_RADIUS, 10, 10]} />
-          <meshBasicMaterial color={editable ? "#ffffff" : theme.color.polyline} />
+          <meshBasicMaterial color={editable ? "#ffffff" : theme.color.polyline} transparent opacity={0.45} depthWrite={false} />
         </mesh>
       ))}
       <Html position={mid} center>

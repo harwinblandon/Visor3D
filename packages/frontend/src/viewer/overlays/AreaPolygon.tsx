@@ -45,7 +45,7 @@ export function AreaPolygon({ points, area, label, editable, onVertexDown }: Are
         points.map((p, i) => (
           <mesh key={i} position={p} onPointerDown={handleDown(i)}>
             <sphereGeometry args={[VERTEX_RADIUS_EDITABLE, 12, 12]} />
-            <meshBasicMaterial color="#ffffff" />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.45} depthWrite={false} />
           </mesh>
         ))}
       <Html position={centroid} center>

@@ -74,7 +74,7 @@ export function PolylineTool() {
           {pendingPoints.map((p, i) => (
             <mesh key={i} position={p} onPointerDown={handlePendingVertexDown(i)}>
               <sphereGeometry args={[0.04, 10, 10]} />
-              <meshBasicMaterial color={theme.color.polyline} />
+              <meshBasicMaterial color={theme.color.polyline} transparent opacity={0.45} depthWrite={false} />
             </mesh>
           ))}
         </>

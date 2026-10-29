@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
-import { Box3, Vector3, type Group } from "three";
+import { Box3, Group, Vector3 } from "three";
 import { useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
+import { modelOcclusionRef } from "./modelOcclusionRef";
 
 interface ModelLoaderProps {
   url: string;
@@ -27,6 +28,10 @@ export function ModelLoader({
     const center = box.getCenter(new Vector3());
     const size = box.getSize(new Vector3());
     onLoaded?.({ center, size });
+    modelOcclusionRef.current = groupRef.current;
+    return () => {
+      modelOcclusionRef.current = new Group();
+    };
   }, [scene, onLoaded]);
 
   const handleClick = (event: ThreeEvent<MouseEvent>) => {

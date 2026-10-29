@@ -4,6 +4,7 @@ import type { ThreeEvent } from "@react-three/fiber";
 import { BufferGeometry, Float32BufferAttribute, DoubleSide, type Vector3 } from "three";
 import { circlePolygonPoints, circleRadius, type Circle3 } from "../math/circle";
 import { theme } from "../../styles/theme";
+import { modelOcclusionRef } from "../modelOcclusionRef";
 
 interface CircleOverlayProps {
   circle: Circle3;
@@ -60,7 +61,11 @@ export function CircleOverlay({ circle, label, editable, onVertexDown }: CircleO
         </>
       )}
       {/* Desplazada hacia arriba del centro para no tapar la bolita que marca el centro. */}
-      <Html position={circle.center as Vector3} style={{ transform: "translate(-50%, -160%)" }}>
+      <Html
+        position={circle.center as Vector3}
+        style={{ transform: "translate(-50%, -160%)" }}
+        occlude={[modelOcclusionRef]}
+      >
         <div
           style={{
             background: "rgba(15, 17, 20, 0.9)",

@@ -2,6 +2,7 @@ import { Line, Html } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { Vector3 } from "three";
 import { theme } from "../../styles/theme";
+import { modelOcclusionRef } from "../modelOcclusionRef";
 
 interface PolylineShapeProps {
   points: Vector3[];
@@ -33,7 +34,7 @@ export function PolylineShape({ points, length, label, editable, onVertexDown }:
           <meshBasicMaterial color={editable ? "#ffffff" : theme.color.polyline} transparent opacity={0.45} depthWrite={false} />
         </mesh>
       ))}
-      <Html position={mid} center>
+      <Html position={mid} center occlude={[modelOcclusionRef]}>
         <div
           style={{
             background: "rgba(15, 17, 20, 0.9)",

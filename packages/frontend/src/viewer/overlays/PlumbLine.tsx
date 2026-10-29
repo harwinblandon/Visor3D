@@ -3,6 +3,7 @@ import type { ThreeEvent } from "@react-three/fiber";
 import { Vector3 } from "three";
 import { computePlumb } from "../math/plumb";
 import { theme } from "../../styles/theme";
+import { modelOcclusionRef } from "../modelOcclusionRef";
 
 interface PlumbLineProps {
   base: Vector3;
@@ -49,7 +50,7 @@ export function PlumbLine({ base, top, label, editable, onVertexDown }: PlumbLin
 
       {/* Anclada al punto superior pero desplazada hacia arriba (no centrada encima), para
           que la etiqueta nunca tape la bolita que marca exactamente dónde quedó el punto. */}
-      <Html position={top} style={{ transform: "translate(-50%, -160%)" }}>
+      <Html position={top} style={{ transform: "translate(-50%, -160%)" }} occlude={[modelOcclusionRef]}>
         <div
           style={{
             background: "rgba(15, 17, 20, 0.9)",

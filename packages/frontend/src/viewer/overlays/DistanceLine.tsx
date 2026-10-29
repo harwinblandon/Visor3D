@@ -2,6 +2,7 @@ import { Line, Html } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import { Vector3 } from "three";
 import { theme } from "../../styles/theme";
+import { modelOcclusionRef } from "../modelOcclusionRef";
 
 interface DistanceLineProps {
   a: Vector3;
@@ -38,7 +39,7 @@ export function DistanceLine({ a, b, distance, label, editable, onVertexDown }: 
         <sphereGeometry args={[radius, 12, 12]} />
         <meshBasicMaterial color={editable ? "#ffffff" : theme.color.distance} transparent opacity={0.45} depthWrite={false} />
       </mesh>
-      <Html position={midpoint} center>
+      <Html position={midpoint} center occlude={[modelOcclusionRef]}>
         <div
           style={{
             background: "rgba(15, 17, 20, 0.9)",

@@ -49,6 +49,7 @@ interface OrthophotoViewerProps {
   onUnlock: (password: string) => Promise<boolean>;
   onLock: () => void;
   onOpenManager: () => void;
+  onOpenUsagePanel: () => void;
 }
 
 const POINT_TOOLS = new Set(["measure-distance", "measure-area", "vectorize-polyline", "measure-circle"]);
@@ -66,7 +67,7 @@ interface TerrainOverride {
 // tambien importa maplibre-gl-shared.mjs como archivo hermano, por eso van los dos juntos).
 setWorkerUrl("/maplibre-gl-worker.mjs");
 
-export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpenManager }: OrthophotoViewerProps) {
+export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpenManager, onOpenUsagePanel }: OrthophotoViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const terrainControlRef = useRef<TerrainControl | null>(null);
@@ -337,6 +338,7 @@ export function OrthophotoViewer({ orthophoto, isAdmin, onUnlock, onLock, onOpen
             onOpenManager={onOpenManager}
             onOpenLayers={() => setIsLayersPanelOpen(true)}
             onOpenTerrain={() => setIsTerrainPanelOpen(true)}
+            onOpenUsagePanel={onOpenUsagePanel}
           />
         </div>
 

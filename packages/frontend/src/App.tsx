@@ -8,6 +8,7 @@ import { ModelManager } from "./components/ModelManager";
 import { OrthophotoManager } from "./components/OrthophotoManager";
 import { OrthophotoUploadPanel } from "./components/OrthophotoUploadPanel";
 import { ModelUnavailable } from "./components/ModelUnavailable";
+import { UsagePanel } from "./components/UsagePanel";
 import { getActiveModel, getModel } from "./api/models";
 import { getOrthophoto } from "./api/orthophotos";
 import { getStoredAdminKey, setStoredAdminKey, verifyAdminKey } from "./api/auth";
@@ -30,6 +31,7 @@ function OrthophotoApp({ orthophotoId }: { orthophotoId: string }) {
   const [isAdmin, setIsAdmin] = useState(() => !!getStoredAdminKey());
   const [isManagerOpen, setIsManagerOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isUsagePanelOpen, setIsUsagePanelOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -80,6 +82,7 @@ function OrthophotoApp({ orthophotoId }: { orthophotoId: string }) {
         onUnlock={handleUnlock}
         onLock={handleLock}
         onOpenManager={() => setIsManagerOpen(true)}
+        onOpenUsagePanel={() => setIsUsagePanelOpen(true)}
       />
       {isManagerOpen && (
         <OrthophotoManager
@@ -102,6 +105,7 @@ function OrthophotoApp({ orthophotoId }: { orthophotoId: string }) {
           }}
         />
       )}
+      {isUsagePanelOpen && <UsagePanel onClose={() => setIsUsagePanelOpen(false)} />}
     </>
   );
 }
@@ -115,6 +119,7 @@ function ModelApp() {
   const [isManagerOpen, setIsManagerOpen] = useState(false);
   const [isOrthophotoManagerOpen, setIsOrthophotoManagerOpen] = useState(false);
   const [isOrthophotoUploadOpen, setIsOrthophotoUploadOpen] = useState(false);
+  const [isUsagePanelOpen, setIsUsagePanelOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -197,6 +202,7 @@ function ModelApp() {
         onUploadNewModel={() => setView("upload")}
         onOpenManager={() => setIsManagerOpen(true)}
         onOpenOrthophotoManager={() => setIsOrthophotoManagerOpen(true)}
+        onOpenUsagePanel={() => setIsUsagePanelOpen(true)}
         isAdmin={isAdmin}
         onUnlock={handleUnlock}
         onLock={handleLock}
@@ -236,6 +242,7 @@ function ModelApp() {
           }}
         />
       )}
+      {isUsagePanelOpen && <UsagePanel onClose={() => setIsUsagePanelOpen(false)} />}
     </>
   );
 }

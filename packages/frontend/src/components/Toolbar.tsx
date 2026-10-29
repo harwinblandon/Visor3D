@@ -72,6 +72,7 @@ interface ToolbarProps {
   onLock: () => void;
   onOpenTourManager: () => void;
   onOpenOrthophotoManager: () => void;
+  onOpenUsagePanel: () => void;
 }
 
 export function AdminUnlockMenu({ onUnlock }: { onUnlock: (password: string) => Promise<boolean> }) {
@@ -149,6 +150,7 @@ export function Toolbar({
   onLock,
   onOpenTourManager,
   onOpenOrthophotoManager,
+  onOpenUsagePanel,
 }: ToolbarProps) {
   const activeTool = useViewerStore((s) => s.activeTool);
   const setActiveTool = useViewerStore((s) => s.setActiveTool);
@@ -214,6 +216,8 @@ export function Toolbar({
       <DropdownItem onClick={onUploadNewModel}>Subir nuevo modelo</DropdownItem>
       <DropdownDivider />
       <DropdownItem onClick={onOpenOrthophotoManager}>Gestionar ortofotos</DropdownItem>
+      <DropdownDivider />
+      <DropdownItem onClick={onOpenUsagePanel}>Ver visitas</DropdownItem>
       <DropdownDivider />
       <DropdownItem onClick={onLock}>Cerrar sesión de administrador</DropdownItem>
     </>

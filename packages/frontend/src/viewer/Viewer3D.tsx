@@ -4,6 +4,7 @@ import { Vector3 } from "three";
 import type { Model } from "@h-geovisor/shared";
 import { ModelLoader } from "./ModelLoader";
 import { CameraRig } from "./CameraRig";
+import { VertexNudgeController } from "./interactions/VertexNudgeController";
 import { MeasureDistanceTool } from "./interactions/MeasureDistanceTool";
 import { MeasureAreaTool, finalizeAreaPolygon } from "./interactions/MeasureAreaTool";
 import { PolylineTool, finalizePolyline } from "./interactions/PolylineTool";
@@ -33,6 +34,7 @@ interface Viewer3DProps {
   onUploadNewModel: () => void;
   onOpenManager: () => void;
   onOpenOrthophotoManager: () => void;
+  onOpenUsagePanel: () => void;
   isAdmin: boolean;
   onUnlock: (password: string) => Promise<boolean>;
   onLock: () => void;
@@ -44,6 +46,7 @@ export function Viewer3D({
   onUploadNewModel,
   onOpenManager,
   onOpenOrthophotoManager,
+  onOpenUsagePanel,
   isAdmin,
   onUnlock,
   onLock,
@@ -208,6 +211,7 @@ export function Viewer3D({
         onLock={onLock}
         onOpenTourManager={() => setIsTourManagerOpen(true)}
         onOpenOrthophotoManager={onOpenOrthophotoManager}
+        onOpenUsagePanel={onOpenUsagePanel}
       />
       <MeasurementList />
       <AnnotationDetail />
@@ -247,6 +251,7 @@ export function Viewer3D({
         <MeasurePlumbTool />
         <AnnotationTool />
         <CameraTourController />
+        <VertexNudgeController />
         <CameraRig target={bounds} />
       </Canvas>
     </div>

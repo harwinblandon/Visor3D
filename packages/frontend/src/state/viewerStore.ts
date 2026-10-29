@@ -82,6 +82,9 @@ interface ViewerState {
   selectedAnnotationId: string | null;
   editingMeasurement: EditingMeasurement | null;
   draggingIndex: number | null;
+  /** Igual que draggingIndex pero sobrevive al soltar el mouse, para poder
+   *  afinar el punto con las flechas del teclado después de arrastrarlo. */
+  selectedVertexIndex: number | null;
   lastCreatedMeasurementId: string | null;
   tourStops: TourStop[];
   tourStatus: TourStatus;
@@ -119,6 +122,7 @@ interface ViewerState {
   startDrag: (index: number) => void;
   endDrag: () => void;
   updateDragPoint: (point: Vector3) => void;
+  nudgeSelectedVertex: (delta: Vector3) => void;
   setTourStops: (stops: TourStop[]) => void;
   addTourStop: (stop: TourStop) => void;
   removeTourStop: (id: string) => void;
@@ -151,6 +155,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
   selectedAnnotationId: null,
   editingMeasurement: null,
   draggingIndex: null,
+  selectedVertexIndex: null,
   lastCreatedMeasurementId: null,
   tourStops: [],
   tourStatus: "idle",
@@ -250,14 +255,22 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setSelectedAnnotationId: (id) => set({ selectedAnnotationId: id }),
 
   startEditingMeasurement: (m) =>
-    set({ editingMeasurement: m, activeTool: "none", pendingPoints: [], pendingCircleNormal: null, pendingAnnotation: null }),
+    set({
+      editingMeasurement: m,
+      activeTool: "none",
+      pendingPoints: [],
+      pendingCircleNormal: null,
+      pendingAnnotation: null,
+      selectedVertexIndex: null,
+    }),
 
-  cancelEditingMeasurement: () => set({ editingMeasurement: null, draggingIndex: null }),
+  cancelEditingMeasurement: () => set({ editingMeasurement: null, draggingIndex: null, selectedVertexIndex: null }),
 
   applyEditedMeasurement: (id, points, value) =>
     set((state) => ({
       editingMeasurement: null,
       draggingIndex: null,
+      selectedVertexIndex: null,
       distanceMeasurements:
         state.editingMeasurement?.type === "distance"
           ? state.distanceMeasurements.map((m) =>
@@ -310,7 +323,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
 
   setLastCreatedMeasurementId: (id) => set({ lastCreatedMeasurementId: id }),
 
-  startDrag: (index) => set({ draggingIndex: index }),
+  startDrag: (index) => set({ draggingIndex: index, selectedVertexIndex: index }),
 
   endDrag: () => set({ draggingIndex: null }),
 
@@ -334,6 +347,23 @@ export const useViewerStore = create<ViewerState>((set) => ({
       const points = state.pendingPoints.slice();
       points[state.draggingIndex] = point;
       return { pendingPoints: points };
+    }),
+
+  nudgeSelectedVertex: (delta) =>
+    set((state) => {
+      if (state.selectedVertexIndex === null || !state.editingMeasurement) return {};
+      const index = state.selectedVertexIndex;
+      const isCircleCenterDrag = state.editingMeasurement.type === "circle" && index === 0;
+      const points = state.editingMeasurement.points.slice();
+      const movedPoint = points[index].clone().add(delta);
+      if (isCircleCenterDrag) {
+        points[0] = movedPoint;
+        if (points[1]) points[1] = points[1].clone().add(delta);
+        if (points[2]) points[2] = points[2].clone().add(delta);
+      } else {
+        points[index] = movedPoint;
+      }
+      return { editingMeasurement: { ...state.editingMeasurement, points } };
     }),
 
   setTourStops: (stops) => set({ tourStops: stops }),

@@ -172,7 +172,8 @@ function Row({
       {editingVertices && (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <span style={{ color: theme.color.textMuted, fontSize: 11 }}>
-            Arrastra los puntos blancos sobre el modelo para corregirlos.
+            Arrastra los puntos blancos sobre el modelo para corregirlos. Tras soltar, usa las
+            flechas del teclado para afinar el punto (Shift = paso grande, Alt = paso fino).
           </span>
           <div style={{ display: "flex", gap: 6 }}>
             <button

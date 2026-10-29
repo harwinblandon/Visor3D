@@ -12,9 +12,14 @@ interface DistanceLineProps {
   onVertexDown?: (index: number) => void;
 }
 
+// Radio fijo y pequeño (no proporcional a la distancia medida), igual que en PlumbLine:
+// en mediciones largas, un radio proporcional tapaba el punto exacto donde se hizo clic.
+const VERTEX_RADIUS = 0.035;
+const VERTEX_RADIUS_EDITABLE = 0.05;
+
 export function DistanceLine({ a, b, distance, label, editable, onVertexDown }: DistanceLineProps) {
   const midpoint = a.clone().add(b).multiplyScalar(0.5);
-  const radius = Math.max(distance * 0.01, 0.02) * (editable ? 1.8 : 1);
+  const radius = editable ? VERTEX_RADIUS_EDITABLE : VERTEX_RADIUS;
 
   const handleDown = (index: number) => (event: ThreeEvent<PointerEvent>) => {
     if (!editable) return;

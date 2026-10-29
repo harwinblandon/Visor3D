@@ -38,7 +38,8 @@ export function CircleOverlay({ circle, label, editable, onVertexDown }: CircleO
     onVertexDown?.(index);
   };
 
-  const handleRadius = Math.max(radius * 0.06, 0.03) * (editable ? 1.5 : 1);
+  // Radio fijo y pequeño, igual que en las demás herramientas de medición.
+  const handleRadius = 0.05;
 
   return (
     <group>
@@ -58,7 +59,8 @@ export function CircleOverlay({ circle, label, editable, onVertexDown }: CircleO
           </mesh>
         </>
       )}
-      <Html position={circle.center as Vector3} center>
+      {/* Desplazada hacia arriba del centro para no tapar la bolita que marca el centro. */}
+      <Html position={circle.center as Vector3} style={{ transform: "translate(-50%, -160%)" }}>
         <div
           style={{
             background: "rgba(15, 17, 20, 0.9)",

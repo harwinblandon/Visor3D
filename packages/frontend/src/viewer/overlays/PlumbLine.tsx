@@ -12,10 +12,16 @@ interface PlumbLineProps {
   onVertexDown?: (index: number) => void;
 }
 
+// Radio fijo y pequeño (no proporcional a la altura medida): en un muro de 20 m, el radio
+// "proporcional" de antes llegaba a 20+ cm, mucho más grande que la propia desviación que se
+// quiere detectar (unos pocos cm) -- tapaba el punto exacto donde se hizo clic en vez de
+// marcarlo con precisión.
+const VERTEX_RADIUS = 0.035;
+const VERTEX_RADIUS_EDITABLE = 0.05;
+
 export function PlumbLine({ base, top, label, editable, onVertexDown }: PlumbLineProps) {
   const { deviation, height, topRef } = computePlumb(base, top);
-  const radius = Math.max(height * 0.01, 0.02) * (editable ? 1.8 : 1);
-  const labelPos = topRef.clone().add(top).multiplyScalar(0.5);
+  const radius = editable ? VERTEX_RADIUS_EDITABLE : VERTEX_RADIUS;
 
   const handleDown = (index: number) => (event: ThreeEvent<PointerEvent>) => {
     if (!editable) return;
@@ -41,7 +47,9 @@ export function PlumbLine({ base, top, label, editable, onVertexDown }: PlumbLin
         <meshBasicMaterial color={editable ? "#ffffff" : theme.color.plumb} />
       </mesh>
 
-      <Html position={labelPos} center>
+      {/* Anclada al punto superior pero desplazada hacia arriba (no centrada encima), para
+          que la etiqueta nunca tape la bolita que marca exactamente dónde quedó el punto. */}
+      <Html position={top} style={{ transform: "translate(-50%, -160%)" }}>
         <div
           style={{
             background: "rgba(15, 17, 20, 0.9)",

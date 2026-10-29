@@ -13,6 +13,9 @@ interface AreaPolygonProps {
   onVertexDown?: (index: number) => void;
 }
 
+// Radio fijo y pequeño, igual que en PlumbLine/DistanceLine: no debe tapar el punto exacto.
+const VERTEX_RADIUS_EDITABLE = 0.05;
+
 export function AreaPolygon({ points, area, label, editable, onVertexDown }: AreaPolygonProps) {
   const geometry = useMemo(() => {
     const { normal } = computeNewellArea(points);
@@ -41,7 +44,7 @@ export function AreaPolygon({ points, area, label, editable, onVertexDown }: Are
       {editable &&
         points.map((p, i) => (
           <mesh key={i} position={p} onPointerDown={handleDown(i)}>
-            <sphereGeometry args={[0.08, 12, 12]} />
+            <sphereGeometry args={[VERTEX_RADIUS_EDITABLE, 12, 12]} />
             <meshBasicMaterial color="#ffffff" />
           </mesh>
         ))}

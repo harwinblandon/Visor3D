@@ -11,6 +11,10 @@ interface PolylineShapeProps {
   onVertexDown?: (index: number) => void;
 }
 
+// Radio fijo y pequeño, igual que en PlumbLine/DistanceLine/AreaPolygon.
+const VERTEX_RADIUS = 0.035;
+const VERTEX_RADIUS_EDITABLE = 0.05;
+
 export function PolylineShape({ points, length, label, editable, onVertexDown }: PolylineShapeProps) {
   const mid = points[Math.floor(points.length / 2)];
 
@@ -25,7 +29,7 @@ export function PolylineShape({ points, length, label, editable, onVertexDown }:
       <Line points={points} color={theme.color.polyline} lineWidth={editable ? 3 : 2} />
       {points.map((p, i) => (
         <mesh key={i} position={p} onPointerDown={handleDown(i)}>
-          <sphereGeometry args={[editable ? 0.07 : 0.04, 10, 10]} />
+          <sphereGeometry args={[editable ? VERTEX_RADIUS_EDITABLE : VERTEX_RADIUS, 10, 10]} />
           <meshBasicMaterial color={editable ? "#ffffff" : theme.color.polyline} />
         </mesh>
       ))}
